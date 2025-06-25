@@ -6,6 +6,7 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+  --black-100: #111111;
 }
 
 
@@ -28,4 +29,8 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+.dark {
+  --theme-card: var(--black-100);
 }

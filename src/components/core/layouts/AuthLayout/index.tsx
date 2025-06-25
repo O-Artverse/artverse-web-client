@@ -3,7 +3,7 @@ interface AuthLayoutProps {
 }
 
 function AuthLayout({ children }: AuthLayoutProps) {
-    return <main className="!bg-transparent">{children}</main>
+    return <main>{children}</main>
 }
 
 export default AuthLayout
