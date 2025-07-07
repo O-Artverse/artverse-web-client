@@ -17,6 +17,8 @@ const config: Config = {
         "tertiary": "#000000",
         "quaternary": "#000000",
         "quinary": "#000000",
+        background: "rgb(var(--background-start-rgb))",
+        foreground: "rgb(var(--foreground-rgb))",
       },
     },
   },

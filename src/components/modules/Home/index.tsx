@@ -16,12 +16,12 @@ const Home = () => {
     }, [])
 
     if (loading || isLoading) {
-        return <div>Loading...</div>
+        return <div className="text-foreground">Loading...</div>
     }
 
     return (
         <div className="mx-auto max-w-full md:max-w-[1440px] p-4">
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-foreground">
                 {isAuthenticated ? (
                     <div>Welcome back, {user?.name}!</div>
                 ) : (
