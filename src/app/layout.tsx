@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Artverse',
   description: 'Artverse - Your Digital Art Gallery',
-  // icons: '/icons/logo.png',
+  icons: '@/assets/images/logoIcon.png',
 }
 
 export default function RootLayout({

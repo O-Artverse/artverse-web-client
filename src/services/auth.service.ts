@@ -1,15 +1,23 @@
-import axios from 'axios';
 import webStorageClient from '@/utils/webStorageClient';
 import constants from '@/settings/constants';
 import axiosClient from '@/configs/axios-client';
+import type { LoginPostDto, RegisterPostDto } from '@/types/user';
+import type { RegisterResponsePostDto } from '@/models/auth/register.response.dto';
 
 export const AuthService = {
-  async login(email: string, password: string) {
+  async register(dto: RegisterPostDto) {
     try {
-      const response = await axiosClient.post(`/auth/login`, {
-        email,
-        password,
-      });
+      const response: RegisterResponsePostDto = await axiosClient.post(`/auth/register`,
+        dto
+      );
+      return { response };
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Login failed');
+    }
+  },
+  async login(dto: LoginPostDto) {
+    try {
+      const response = await axiosClient.post(`/auth/login`, dto);
       const { token, user } = response.data;
       webStorageClient.setToken(token);
       return { token, user };
@@ -17,7 +25,6 @@ export const AuthService = {
       throw new Error(error.response?.data?.message || 'Login failed');
     }
   },
-
   async logout() {
     webStorageClient.remove(constants.ACCESS_TOKEN);
     webStorageClient.remove(constants.REFRESH_TOKEN);

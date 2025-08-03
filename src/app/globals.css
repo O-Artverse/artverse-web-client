@@ -34,3 +34,7 @@ body {
 .dark {
   --theme-card: var(--black-100);
 }
+
+html.dark {
+  --foreground-rgb: 255, 255, 255;
+}
