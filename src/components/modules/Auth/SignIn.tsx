@@ -58,7 +58,7 @@ const SignIn = () => {
     const onSubmit: SubmitHandler<LoginPostDto> = (data) => {
         postLogin(data, {
             onSuccess: () => {
-                router.push("/")
+                router.push("/explore")
             },
         });
     }

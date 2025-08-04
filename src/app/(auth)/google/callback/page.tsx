@@ -31,8 +31,13 @@ export default function AuthCallback() {
       try {
       
         // Also store in webStorageClient for compatibility
-        webStorageClient.setToken(accessToken);
-        webStorageClient.setRefreshToken(refreshToken);
+        webStorageClient.setToken(accessToken, {
+          maxAge: 60 * 60 * 24 * 30, // 30 days in seconds
+        });
+        
+        webStorageClient.setRefreshToken(refreshToken, {
+          maxAge: 60 * 60 * 24 * 30, // 30 days in seconds
+        });
         
         // Update auth state
         dispatch(
@@ -40,7 +45,6 @@ export default function AuthCallback() {
             token: accessToken,
             user: {
               id: userId,
-              // The complete user data will be fetched by the fetchUser action
             },
           })
         );
