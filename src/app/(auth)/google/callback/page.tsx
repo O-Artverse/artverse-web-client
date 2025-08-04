@@ -29,10 +29,46 @@ export default function AuthCallback() {
 
     if (accessToken && refreshToken && userId) {
       try {
-      
-        // Also store in webStorageClient for compatibility
-        webStorageClient.setToken(accessToken);
-        webStorageClient.setRefreshToken(refreshToken);
+        // Store using webStorageClient
+        webStorageClient.setToken(accessToken, {
+          maxAge: 60 * 60 * 24 * 30, // 30 days in seconds
+        });
+        
+        webStorageClient.setRefreshToken(refreshToken, {
+          maxAge: 60 * 60 * 24 * 30, // 30 days in seconds
+        });
+        
+        // Also set cookies directly with js-cookie for better browser compatibility
+        // Set cookies with and without underscore to ensure compatibility with all parts of the app
+        Cookies.set(constants.ACCESS_TOKEN, accessToken, {
+          expires: 30, // 30 days
+          path: '/',
+          sameSite: 'strict'
+        });
+        
+        Cookies.set(constants.REFRESH_TOKEN, refreshToken, {
+          expires: 30, // 30 days
+          path: '/',
+          sameSite: 'strict'
+        });
+        
+        // Also set cookies with names used in axios-client
+        Cookies.set('accessToken', accessToken, {
+          expires: 30, // 30 days
+          path: '/',
+          sameSite: 'strict'
+        });
+        
+        Cookies.set('refreshToken', refreshToken, {
+          expires: 30, // 30 days
+          path: '/',
+          sameSite: 'strict'
+        });
+        
+        console.log("Cookies set successfully:", {
+          withUnderscore: Cookies.get(constants.ACCESS_TOKEN),
+          withoutUnderscore: Cookies.get('accessToken')
+        });
         
         // Update auth state
         dispatch(
@@ -40,7 +76,6 @@ export default function AuthCallback() {
             token: accessToken,
             user: {
               id: userId,
-              // The complete user data will be fetched by the fetchUser action
             },
           })
         );
