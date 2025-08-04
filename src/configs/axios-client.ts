@@ -5,6 +5,7 @@ import { API_BASE_URL } from '@/constants/env';
 import { refreshTokens } from '@/services/auth.service';
 import { getClientCookie } from '@/utils/cookieClientUltils';
 import { getServerCookie } from '@/utils/cookieServerUltils';
+import constants from '@/settings/constants';
 
 const redirectToLogin = () => {
   if (typeof window !== 'undefined') {
@@ -124,13 +125,15 @@ axiosClient.interceptors.response.use(
 
         originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
 
-        Cookies.set('accessToken', accessToken, {
+        Cookies.set(constants.ACCESS_TOKEN, accessToken, {
+          expires: 30, // 30 days
           secure: true,
           sameSite: 'strict',
           path: '/',
         });
 
-        Cookies.set('refreshToken', newRefreshToken, {
+        Cookies.set(constants.REFRESH_TOKEN, newRefreshToken, {
+          expires: 30, // 30 days
           secure: true,
           sameSite: 'strict',
           path: '/',
