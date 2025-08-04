@@ -96,7 +96,7 @@ const TopbarLink = ({ href, title }: TopbarLinkProps) => {
   return (
     <Link
       href={href}
-      className='text-sm flex justify-center items-center font-medium hover:text-purple-600 dark:text-white dark:hover:text-purple-400'
+      className='text-[14px] flex justify-center items-center font-normal hover:text-purple-600 dark:text-white dark:hover:text-purple-400'
     >
       {title}
     </Link>
@@ -181,25 +181,27 @@ export default function Topbar() {
 
           <button className=' p-1 hover:bg-gray-200 dark:hover:bg-[#1B1F26]  rounded-full w-8 h-8 flex items-center justify-center relative'>
             <ShoppingBagOpenIcon size={20} weight="light" className='dark:text-white' />
-            <span className='absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-sm'></span>
+            <span className='absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full'></span>
           </button>
 
           <div className='' ref={avatarRef}>
             <button
-              className='flex items-center  gap-2 focus:outline-none'
+              className='flex items-center gap-2 focus:outline-none'
               onClick={() => setShowUserMenu(!showUserMenu)}
             >
-              <Image
-                src="/images/avatar.png"
-                alt="User"
-                width={40}
-                height={40}
-                className='w-10 h-10 rounded-sm text-white object-cover'
-              />
+              <div className='w-[32px] h-[32px] rounded-sm overflow-hidden '>
+                <Image
+                  src="/images/avatar.png"
+                  alt="User"
+                  width={40}
+                  height={40}
+                  className='w-full h-full object-cover'
+                />
+              </div>
               <CaretDown
                 size={16}
                 weight="bold"
-                className={`text-gray-600 dark:text-gray-300 transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`}
+                className={`text-black dark:text-white transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`}
               />
             </button>
 
@@ -210,17 +212,33 @@ export default function Topbar() {
       {showUserMenu && (
         <div className='
          top-full  bg-[#FFFFFF]/90 dark:bg-[#1E1B26]/90 
-        absolute right-3 w-48 rounded-md shadow-lg py-1 z-50'>
-          <Link href="/profile" className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'>
-            Your Profile
+        absolute right-3 w-[338px]  shadow-lg py-2 z-50 rounded-xl flex flex-col gap-[8px] p-[12px]'>
+          <div className='flex items-center gap-[8px] p-[12px] bg-white dark:bg-[#121212] rounded-lg '>
+            <div className='w-[48px] h-[48px] rounded-none overflow-hidden'>
+              <Image
+                src={'/images/avatar.png'}
+                alt="artist"
+                width={48}
+                height={48}
+                className='object-cover w-full h-full '
+              />
+            </div>
+            <div className='flex flex-col gap-[2px]'>
+              <h3 className='text-[16px] text-black font-bold dark:text-white'>James Anderson</h3>
+              <p className=' text-gray-500 text-[12px] dark:text-gray-400'>Personal</p>
+              <p className=' text-gray-500 text-[12px] dark:text-gray-400'>james@gmail.com</p>
+            </div>
+          </div>
+          <Link href="/profile" className='block px-3 py-[8px] font-bold text-sm text-gray-700 hover:bg-gray-100 dark:text-white/60 dark:hover:bg-gray-700'>
+          Switch to an artist account
           </Link>
-          <Link href="/settings" className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'>
-            Settings
+          <p className='text-[8px]  px-3 py-2 text-black/60 dark:text-white/60'>Your account</p>
+          <Link href="/profile" className='block px-3  py-[8px] font-bold text-sm text-gray-700 hover:bg-gray-100 dark:text-white/60 dark:hover:bg-gray-700'>
+          Add more accounts
+          </Link> <Link href="/profile" className='block font-bold px-3 py-[8px] text-sm text-gray-700 hover:bg-gray-100 dark:text-white/60 dark:hover:bg-gray-700'>
+        Sign out
           </Link>
-          <div className='border-t border-gray-100 dark:border-gray-700 my-1'></div>
-          <button className='w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700'>
-            Sign out
-          </button>
+          
         </div>
       )}
       {isSearchFocused && (
@@ -240,12 +258,12 @@ export default function Topbar() {
                   const searchLower = searchQuery.toLowerCase();
                   const textLower = text.toLowerCase();
                   const matchIndex = textLower.indexOf(searchLower);
-                  
-                  if (matchIndex !== -1) { 
+
+                  if (matchIndex !== -1) {
                     const beforeMatch = text.substring(0, matchIndex);
                     const match = text.substring(matchIndex, matchIndex + searchQuery.length);
                     const afterMatch = text.substring(matchIndex + searchQuery.length);
-                    
+
                     return (
                       <button
                         key={suggestion.id}
@@ -261,7 +279,7 @@ export default function Topbar() {
                       </button>
                     );
                   }
-                  
+
                   return (
                     <button
                       key={suggestion.id}
@@ -280,7 +298,7 @@ export default function Topbar() {
                   <Link
                     href={`/artist/${artist.id}`}
                     key={artist.id}
-                    className='flex items-center px-[11px] hover:bg-gray-200 dark:hover:bg-black rounded-md '
+                    className='flex items-center px-[11px] py-[12px] hover:bg-gray-200 dark:hover:bg-black rounded-md '
                   >
                     <div className='w-9 h-9 rounded-full bg-gray-300 dark:bg-gray-600 mr-[11px] overflow-hidden'>
                       {artist.avatar ?
@@ -289,7 +307,7 @@ export default function Topbar() {
                           alt="artist"
                           width={38}
                           height={38}
-                          className='object-cover'
+                          className='object-cover w-full h-full'
                         />
                         :
                         <div className='w-full h-full flex items-center justify-center text-xs dark:text-white'>
