@@ -3,7 +3,8 @@ import Cookies from 'js-cookie';
 
 import { API_BASE_URL } from '@/constants/env';
 import { refreshTokens } from '@/services/auth.service';
-import { getCookie } from '@/utils/cookieUtils';
+import { getClientCookie } from '@/utils/cookieClientUltils';
+import { getServerCookie } from '@/utils/cookieServerUltils';
 
 const redirectToLogin = () => {
   if (typeof window !== 'undefined') {
@@ -19,22 +20,36 @@ const redirectToLogin = () => {
 };
 
 const getAccessToken = async () => {
-  let accessToken = (await getCookie('accessToken')) || null;
-  let refreshToken = (await getCookie('refreshToken')) || null;
+  const isClient = typeof window !== 'undefined' && typeof document !== 'undefined';
 
-  if (typeof document !== 'undefined' && !accessToken && !refreshToken) {
-    const cookies = document.cookie.split('; ');
-    const tokenCookie = cookies.find((cookie) => cookie.startsWith('accessToken='));
-    const refreshCookie = cookies.find((cookie) => cookie.startsWith('refreshToken='));
+  let accessToken = null;
+  let refreshToken = null;
 
-    if (tokenCookie) {
-      accessToken = tokenCookie.split('=')[1];
+  if (isClient) {
+    // Client-side - use direct cookie access
+    accessToken = getClientCookie('accessToken');
+    refreshToken = getClientCookie('refreshToken');
+
+    // Fallback to document.cookie if needed
+    if (!accessToken || !refreshToken) {
+      const cookies = document.cookie.split('; ');
+      const tokenCookie = cookies.find((cookie) => cookie.startsWith('accessToken='));
+      const refreshCookie = cookies.find((cookie) => cookie.startsWith('refreshToken='));
+
+      if (tokenCookie) accessToken = tokenCookie.split('=')[1];
+      if (refreshCookie) refreshToken = refreshCookie.split('=')[1];
     }
-    if (refreshCookie) {
-      refreshToken = refreshCookie.split('=')[1];
+  } else {
+    // Server-side - use server cookie access
+    try {
+      accessToken = await getServerCookie('accessToken');
+      refreshToken = await getServerCookie('refreshToken');
+    } catch (error) {
+      // Handle server cookie access failure
+      console.error('Server error getting identifier', error);
     }
   }
-
+  
   return { accessToken, refreshToken };
 };
 
@@ -44,7 +59,7 @@ const axiosClient = axios.create({
     'Content-Type': 'application/json',
     Accept: '*/*',
   },
-  withCredentials: true,
+  withCredentials: true,  
 });
 
 let isRefreshing = false;

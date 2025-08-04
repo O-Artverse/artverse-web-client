@@ -6,6 +6,8 @@ import { getCookie } from '@/utils/cookieUtils';
 import { useGetExceptionSocket } from '@/hooks/sockets/exception.socket';
 import { showToast } from '@/utils/showToast';
 import { ErrorCloseIcon } from '@/components/common/icons/ErrorIcon';
+import { getClientCookie } from '@/utils/cookieClientUltils';
+import { getServerCookie } from '@/utils/cookieServerUltils';
 
 interface ChatSocketContextType {
   isConnected: boolean;
@@ -34,7 +36,15 @@ const ChatSocketProvider: FC<ChatSocketProviderProps> = ({ chatId, children }) =
   });
 
   const connectSocket = async () => {
-    const accessToken = await getCookie('accessToken');
+    const isClient = typeof window !== 'undefined' && typeof document !== 'undefined';
+    
+    let accessToken = null;
+
+    if (isClient) {
+      accessToken = getClientCookie('accessToken');
+    } else {
+      accessToken = await getServerCookie('accessToken');
+    }
 
     if (!accessToken) {
       console.error('No access token found');

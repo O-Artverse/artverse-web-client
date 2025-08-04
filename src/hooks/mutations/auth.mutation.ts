@@ -1,13 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/constants/query-keys';
-import type { LoginPostDto, RegisterPostDto } from '@/types/user';
 import { AuthService } from '@/services/auth.service';
+import { LoginPostDto } from '@/models/auth/LoginSchema';
+import { SignUpPostDto } from '@/models/auth/SignUpSchema';
 
 export const useRegister = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (data: RegisterPostDto) => AuthService.register(data),
+        mutationFn: (data: SignUpPostDto) => AuthService.register(data),
         onSuccess: () => {
             queryClient.invalidateQueries({
                 queryKey: QUERY_KEYS.auth.register(),

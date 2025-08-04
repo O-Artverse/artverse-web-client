@@ -3,9 +3,11 @@ import constants from '@/settings/constants';
 import axiosClient from '@/configs/axios-client';
 import type { LoginPostDto, RegisterPostDto } from '@/types/user';
 import type { RegisterResponsePostDto } from '@/models/auth/register.response.dto';
+import { API_BASE_URL } from '@/constants/env';
+import { SignUpPostDto } from '@/models/auth/SignUpSchema';
 
 export const AuthService = {
-  async register(dto: RegisterPostDto) {
+  async register(dto: SignUpPostDto) {
     try {
       const response: RegisterResponsePostDto = await axiosClient.post(`/auth/register`,
         dto
@@ -18,16 +20,32 @@ export const AuthService = {
   async login(dto: LoginPostDto) {
     try {
       const response = await axiosClient.post(`/auth/login`, dto);
-      const { token, user } = response.data;
-      webStorageClient.setToken(token);
-      return { token, user };
+      const { accessToken, refreshToken, user } = response.data;
+      webStorageClient.setToken(accessToken);
+      if (refreshToken) webStorageClient.setRefreshToken(refreshToken);
+      return { token: accessToken, refreshToken, user };
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Login failed');
     }
   },
+
   async logout() {
     webStorageClient.remove(constants.ACCESS_TOKEN);
     webStorageClient.remove(constants.REFRESH_TOKEN);
+  },
+  getGoogleAuthUrl() {
+    // Make sure we have a full URL with protocol
+    if (!API_BASE_URL) {
+      return 'http://localhost:8080/auth/google';
+    }
+
+    // If API_BASE_URL already includes the protocol, use it directly
+    if (API_BASE_URL.startsWith('http://') || API_BASE_URL.startsWith('https://')) {
+      return `${API_BASE_URL}/auth/google`;
+    }
+
+    // Otherwise, add the http protocol
+    return `http://${API_BASE_URL}/auth/google`;
   },
 };
 

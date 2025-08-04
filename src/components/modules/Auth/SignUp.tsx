@@ -11,11 +11,14 @@ import { useRouter } from 'next/navigation'
 
 import { useRegister } from '@/hooks/mutations/auth.mutation'
 import type { RegisterPostDto } from '@/types/user'
+import { useAuthForm } from '@/contexts/AuthFormContext'
+import { SignUpPostDto } from '@/models/auth/SignUpSchema'
 
 
 const SignUp = () => {
     const router = useRouter()
     const postRegister = useRegister()
+    const { switchForm } = useAuthForm();
 
     const {
         register,
@@ -23,118 +26,130 @@ const SignUp = () => {
         watch,
         control,
         formState: { errors },
-    } = useForm<RegisterPostDto>()
-    const onSubmit: SubmitHandler<RegisterPostDto> = (data) => {
+    } = useForm<SignUpPostDto>()
+    const onSubmit: SubmitHandler<SignUpPostDto> = (data) => {
         postRegister.mutate(data, {
             onSuccess: () => {
-                router.push("/sign-in")
+                // Instead of pushing to sign-in route, switch to sign-in form
+                switchForm('sign-in');
             },
         });
     }
     return (
-        <Card className="p-8 h-[654px] w-[424px] mx-auto shadow-lg rounded-[32px] z-10 gap-4">
-            <div className="flex gap-[18px] w-full justify-center items-center">
-                <Image src={LogoIcon} className='w-6' alt={''} />
+        <Card className="p-10 h-auto w-full max-w-[424px] shadow-lg rounded-3xl z-10 flex flex-col items-center justify-start bg-white gap-4">
+            <div className="flex gap-[18px] w-full justify-center items-center mb-2">
+                <Image src={LogoIcon} className='w-6 h-6' alt="Artverse Logo" />
                 <b className='whitespace-nowrap text-xl w-full text-foreground'>Welcome to Artverse</b>
             </div>
-            <div>
-                <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 text-foreground">
-                    <div className='flex flex-col gap-2.5'>
-                        <Controller
-                            control={control}
-                            name="email"
-                            render={({ field }) => (
-                                <div>
-                                    <Input
-                                        {...field}
-                                        variant='faded'
-                                        label="Email"
-                                        labelPlacement="outside"
-                                        placeholder="example@artverse.now"
-                                        type="email"
-                                        classNames={{
-                                            inputWrapper: "w-[344px] !h-[39px] !min-h-0 !py-0 bg-gray-100 border border-gray-300 rounded-xl",
-                                            input: "text-black placeholder:text-gray-400 text-base font-normal",
-                                            label: "text-black mb-1 text-xs"
-                                        }}
-                                    />
-                                </div>
-                            )}
-                        />
-                        <Controller
-                            control={control}
-                            name="password"
-                            render={({ field }) => (
-                                <div>
-                                    <Input
-                                        {...field}
-                                        variant='faded'
-                                        label="Password"
-                                        labelPlacement="outside"
-                                        placeholder="Enter your password"
-                                        type="password"
-                                        classNames={{
-                                            inputWrapper: "w-[344px] !h-[39px] !min-h-0 !py-0 bg-gray-100 border border-gray-300 rounded-xl",
-                                            input: "text-black placeholder:text-gray-400 text-base font-normal",
-                                            label: "text-black mb-1 text-xs"
-                                        }}
-                                    />
-                                </div>
-                            )}
-                        />
-                        <Controller
-                            control={control}
-                            name="birthdate"
-                            render={({ field }) => (
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3 text-foreground items-center w-full">
+                <div className="flex flex-col gap-0 items-center w-full">
+                    <Controller
+                        control={control}
+                        name="email"
+                        render={({ field }) => (
+                            <div className="flex flex-col w-full items-center mb-2">
+                                <Input
+                                    {...field}
+                                    variant='faded'
+                                    label="Email"
+                                    labelPlacement="outside"
+                                    placeholder="example@artverse.now"
+                                    type="email"
+                                    classNames={{
+                                        inputWrapper: "w-full !h-[39px] !min-h-0 !py-0 bg-gray-100 border border-gray-300 rounded-xl",
+                                        input: "text-black placeholder:text-gray-400 text-base font-normal",
+                                        label: "text-black mb-1 text-xs"
+                                    }}
+                                />
+                            </div>
+                        )}
+                    />
+                    <Controller
+                        control={control}
+                        name="password"
+                        render={({ field }) => (
+                            <div className="flex flex-col w-full items-center mb-2">
+                                <Input
+                                    {...field}
+                                    variant='faded'
+                                    label="Password"
+                                    labelPlacement="outside"
+                                    placeholder="Enter your password"
+                                    type="password"
+                                    classNames={{
+                                        inputWrapper: "w-full !h-[39px] !min-h-0 !py-0 bg-gray-100 border border-gray-300 rounded-xl",
+                                        input: "text-black placeholder:text-gray-400 text-base font-normal",
+                                        label: "text-black mb-1 text-xs"
+                                    }}
+                                />
+                            </div>
+                        )}
+                    />
+                    <Controller
+                        control={control}
+                        name="birthdate"
+                        render={({ field }) => (
+                            <div className="flex flex-col w-full items-center mb-2">
                                 <DatePicker
                                     variant='faded'
                                     label="Birthdate"
                                     labelPlacement="outside"
                                     classNames={{
-                                        inputWrapper: "w-[344px] !h-[39px] !min-h-0 !py-0 bg-gray-100 border border-gray-300 rounded-xl",
+                                        inputWrapper: "w-full !h-[39px] !min-h-0 !py-0 bg-gray-100 border border-gray-300 rounded-xl",
                                         input: "text-black placeholder:text-gray-400 text-base font-normal",
                                         label: "text-black mb-1 text-xs"
                                     }}
                                     onChange={(date) => field.onChange(date)}
                                 />
-                            )}
-                        />
-                        <a href="#" className="text-xs text-[#9C27B0] hover:underline">
-                            Have a account?
-                        </a>
+                            </div>
+                        )}
+                    />
+                    <button 
+                        type="button" 
+                        onClick={() => switchForm('sign-in')} 
+                        className="text-xs text-[#9C27B0] hover:underline w-full max-w-[344px] text-left block mb-1 bg-transparent border-none p-0 cursor-pointer"
+                    >
+                        Have a account?
+                    </button>
+                </div>
+                <div className='flex gap-2 flex-col w-full items-center'>
+                    <Button
+                        type="submit"
+                        className="w-full bg-primary text-white rounded-xl font-semibold transition h-[41px]"
+                        isLoading={postRegister.isPending}
+                    >
+                        Continue
+                    </Button>
+                    <div className="flex items-center justify-center w-full">
+                        <span className="text-foreground text-xs">OR</span>
                     </div>
-                    <div className='flex flex-col gap-2.5'>
-                        <Button
-                            type="submit"
-                            className="w-full bg-[#d243cf] text-white rounded-xl font-semibold transition"
+                    <Button 
+                        className="flex items-center justify-center gap-2 border rounded-xl border-gray-300 bg-white text-black hover:bg-gray-50 w-full h-[41px]"
+                    >
+                        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+                        <span>Sign in with Google</span>
+                    </Button>
+                    <div className="text-xs text-center text-gray-500 w-full mt-1">
+                        By continuing, you agree to Artverse's{' '}
+                        <a href="#" className="underline text-foreground">Terms of Service</a> and{' '}
+                        <a href="#" className="underline text-foreground">Privacy Policy</a>.
+                    </div>
+                    <div className="text-xs text-center text-gray-500 w-full">
+                        <span>Are ready a member? </span>
+                        <button 
+                            type="button" 
+                            onClick={() => switchForm('sign-in')} 
+                            className="font-semibold text-[#9C27B0] hover:underline bg-transparent border-none p-0 cursor-pointer"
                         >
-                            Continue
-                        </Button>
-                        <div className="flex items-center">
-                            <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-                            <span className="mx-2 text-foreground text-xs">OR</span>
-                            <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-                        </div>
-                        <Button className="w-full flex items-center justify-center gap-2 border rounded bg-[#f5f5f5] dark:bg-gray-800 text-foreground hover:bg-gray-50 dark:hover:bg-gray-700">
-                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
-                            <span>Sign in with Google</span>
-                        </Button>
-                        <div className="text-xs text-center text-gray-500 dark:text-gray-400">
-                            By continuing, you agree to Artverse's{' '}
-                            <a href="#" className="underline text-foreground">Terms of Service</a> and{' '}
-                            <a href="#" className="underline text-foreground">Privacy Policy</a>.
-                        </div>
-                        <div className="text-xs text-center text-gray-500 dark:text-gray-400">
-                            <span>Are ready a member? </span>
-                            <a href='/sign-in' className="font-semibold text-[#9C27B0] hover:underline">Sign in</a>
-                        </div>
-                        <div className="text-xs text-center text-gray-500 dark:text-gray-400">
-                            Are you a business?{' '}
-                            <a href="#" className="font-semibold text-foreground hover:underline">Get start here!</a>
-                        </div>
+                            Sign in
+                        </button>
                     </div>
-                </form>
-            </div>
+                    <div className="text-xs text-center text-gray-500 w-full">
+                        <span>Are you a business? </span>
+                        <a href="#" className="font-semibold text-foreground hover:underline">Get start here!</a>
+                    </div>
+                </div>
+            </form>
         </Card>
     )
 }

@@ -52,7 +52,7 @@ const Coming = () => {
     </div>
     <div className="w-full flex justify-center">
       <Button
-        className="bg-[#D243CF] rounded-xl px-4 py-2 text-base md:px-5 md:py-4 md:text-lg lg:text-xl font-bold text-white"
+        className="bg-primary rounded-xl px-4 py-2 text-base md:px-5 md:py-4 md:text-lg lg:text-xl font-bold text-white"
         endContent={<CaretCircleRightIcon size={24} weight="fill" />}
       >
         Explore

@@ -20,13 +20,13 @@ export function showToast({
 }: CustomToastOptions) {
   const toastStyles = tv({
     slots: {
-      base: '',
+      base: 'bg-white/70 backdrop-blur-md border border-white/30 shadow-md',
       icon: 'mr-5',
     },
     variants: {
       color: {
         default: {
-          base: '',
+          base: 'bg-white/70 backdrop-blur-md border border-white/30 shadow-md',
         },
         primary: { base: '' },
         secondary: { base: '' },
@@ -35,7 +35,7 @@ export function showToast({
           icon: 'text-success-300',
         },
         error: {
-          base: 'to-danger-400/1 border-none bg-black-900 bg-gradient-to-r from-danger-400/10',
+          base: 'bg-red-500 text-white',
           icon: 'text-danger-300',
         },
         warning: { base: '' },
@@ -56,8 +56,6 @@ export function showToast({
       content: props.classNames?.content || '',
       icon: toastStyles({ color: color }).icon(),
       title: 'text-white',
-      closeButton: 'opacity-100 absolute right-4 top-1/2 -translate-y-1/2 ',
-      closeIcon: 'bg-transparent border-none color-neutral-70',
     },
     hideIcon: !icon,
     icon,

@@ -19,7 +19,7 @@ const AnyTime = () => {
      
     <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight break-words">
       Join art exhibitions <br />
-      <span className="text-[#D243CF]">anytime, anywhere</span>
+      <span className="text-primary">anytime, anywhere</span>
     </h1>
     <div className="flex-col gap-2 mt-6 hidden md:flex">
       <span className="text-white font-bold text-sm flex items-center gap-2">

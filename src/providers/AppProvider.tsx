@@ -6,6 +6,7 @@ import StoreProvider from "./StoreProvider";
 import AuthProvider from "./AuthProvider";
 import { UIProvider } from "./UIProdivder";
 import ThemeProvider from "./ThemeProvider";
+import { SidebarProvider } from "@/contexts/SidebarContext";
 
 interface ComponentProps {
   children: React.ReactNode;
@@ -19,7 +20,9 @@ const AppProvider: FC<ComponentProps> = ({ children }) => {
           <ReactQueryProvider>
             <UIProvider>
               <AuthProvider>
-                {children}
+                <SidebarProvider>
+                  {children}
+                </SidebarProvider>
               </AuthProvider>
             </UIProvider>
           </ReactQueryProvider>
