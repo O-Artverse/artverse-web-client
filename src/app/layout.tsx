@@ -23,10 +23,11 @@ export default function RootLayout({
         <Script id="theme-script" strategy="beforeInteractive">
           {`
             try {
-              if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark')
+              let theme = localStorage.getItem('artverse-theme');
+              if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
               } else {
-                document.documentElement.classList.remove('dark')
+                document.documentElement.classList.remove('dark');
               }
             } catch (_) {}
           `}

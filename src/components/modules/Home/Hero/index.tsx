@@ -3,7 +3,6 @@ import { Button } from "@heroui/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React from "react";
-import BannerImg from "@/assets/images/banner.png";
 import SignIn from "@/components/modules/Auth/SignIn";
 import SignUp from "@/components/modules/Auth/SignUp";
 import { CaretCircleRight } from "@phosphor-icons/react";
@@ -23,7 +22,7 @@ export default function Hero() {
             <section className="relative snap-start h-screen w-full flex items-center justify-center overflow-hidden">
                 {/* Background image */}
                 <Image
-                    src={BannerImg}
+                    src={'/images/banner.png'}
                     alt="Banner"
                     fill
                     className="object-cover z-0"

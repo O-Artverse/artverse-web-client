@@ -1,7 +1,6 @@
 "use client"
 
 import { addToast, Button, Card, Input } from '@heroui/react'
-import LogoIcon from "@/assets/images/logoIcon.png"
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -85,10 +84,10 @@ const SignIn = () => {
     };
     
     return (
-        <Card className="p-10 h-auto w-full max-w-[424px] shadow-lg rounded-3xl z-10 flex flex-col items-center justify-start bg-white gap-4">
+        <Card className="p-5 sm:p-8 md:p-10 h-auto w-full max-w-[380px] md:max-w-[424px] shadow-lg rounded-3xl z-10 flex flex-col items-center justify-start bg-white gap-4">
              <div className="flex gap-[18px] w-full justify-center items-center mb-2">
-                <Image src={LogoIcon} className='w-6 h-6' alt="Artverse Logo" />
-                <b className='whitespace-nowrap text-xl w-full text-foreground'>Welcome to Artverse</b>
+                <Image src={'/images/logoIcon.png'} className='w-6 h-6' width={24} height={24} alt="Artverse Logo" />
+                <b className='whitespace-nowrap text-base sm:text-xl w-full text-foreground !text-black'>Welcome to Artverse</b>
             </div>
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3 text-foreground items-center w-full">
                 <div className="flex flex-col gap-0 items-center w-full">
@@ -146,12 +145,12 @@ const SignIn = () => {
                     onPress={handleGoogleLogin}
                 >
                     <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
-                    <span>Sign in with Google</span>
+                    <span className="text-xs sm:text-sm">Sign in with Google</span>
                 </Button>
                 <div className="text-xs text-center text-gray-500 w-full mt-1">
                     By continuing, you agree to Artverse's{' '}
-                    <a href="#" className="underline text-foreground">Terms of Service</a> and{' '}
-                    <a href="#" className="underline text-foreground">Privacy Policy</a>.
+                    <a href="#" className="underline text-foreground !text-black">Terms of Service</a> and{' '}
+                    <a href="#" className="underline text-foreground !text-black">Privacy Policy</a>.
                 </div>
                 <div className="text-xs text-center text-gray-500 w-full">
                     <span>You don't have an account? </span>
@@ -165,7 +164,7 @@ const SignIn = () => {
                 </div>
                 <div className="text-xs text-center text-gray-500 w-full">
                     <span>Are you a business? </span>
-                    <a href="#" className="font-semibold text-foreground hover:underline">Get start here!</a>
+                    <a href="#" className="font-semibold text-foreground hover:underline !text-black">Get start here!</a>
                 </div>
                 </div>
             </form>

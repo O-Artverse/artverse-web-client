@@ -1,5 +1,4 @@
 import React from 'react'
-import LogoIcon from "@/assets/images/logoIcon.png";
 import Image from 'next/image';
 
 export default function Footer() {
@@ -9,7 +8,7 @@ export default function Footer() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2">
-            <Image src={LogoIcon} alt="Artverse" width={30} height={30} />
+            <Image src={'/images/logoIcon.png'} alt="Artverse" width={30} height={30} />
             <span className="font-semibold text-xl text-primary">Artverse</span>
           </div>
           <p className="text-sm text-gray-600">

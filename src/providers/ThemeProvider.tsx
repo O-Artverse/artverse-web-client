@@ -9,6 +9,7 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
       attribute="class"
       defaultTheme="system"
       enableSystem={true}
+      storageKey="artverse-theme" 
       disableTransitionOnChange
     >
       {children}

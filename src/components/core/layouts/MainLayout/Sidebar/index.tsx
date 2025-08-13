@@ -5,10 +5,11 @@ import { BellIcon, BooksIcon, ChatCircleIcon, GearIcon, HouseLineIcon, MoonStars
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import React, { useEffect } from 'react'
+import { useTheme } from 'next-themes'
 
 export default function SideBar() {
     return (
-        <div className="w-[88px] min-h-screen p-3">
+        <div className="w-[88px] min-h-screen h-full p-3">
             <div className='flex flex-col justify-between h-full w-full bg-white dark:bg-[#1E1B26] rounded-[14px] [box-shadow:0_1px_4px_rgba(0,0,0,0.2)] p-[8px]'>
                 <div className='flex flex-col gap-3'>
                     <ArtverseLogo />
@@ -29,7 +30,8 @@ export default function SideBar() {
 export const ArtverseLogo = () => {
     return (
         <div className='w-full h-fit flex items-center justify-center p-3'>
-            <Image src={'/images/artverse-logo.png'} alt='Artverse Logo' width={200} height={200} />
+            <Image src={'/images/logoIcon.png'} alt='Artverse Logo' width={40} height={40} className="md:hidden" />
+            <Image src={'/images/artverse-logo.png'} alt='Artverse Logo' width={200} height={200} className="hidden md:block" />
         </div>
     )
 }
@@ -117,23 +119,27 @@ export const SettingItem = () => {
 }
 
 export const SwitchThemeItem = () => {
-    const [isDarkMode, setIsDarkMode] = React.useState(false);
-    useEffect(() => {
-        const hasDarkClass = document.documentElement.classList.contains('dark');
-        setIsDarkMode(hasDarkClass);
-        if (hasDarkClass) {
-            document.documentElement.classList.add('dark');
-        }
-    }, [])
-    const toggleTheme = () => {
-        const newMode = !isDarkMode;
-        setIsDarkMode(newMode);
+    const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = React.useState(false);
 
-        if (newMode) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
+    // useEffect only runs on the client, so now we can safely show the UI
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const toggleTheme = () => {
+        setTheme(theme === 'dark' ? 'light' : 'dark');
+    }
+
+    // Don't render anything until mounted to prevent hydration mismatch
+    if (!mounted) {
+        return (
+            <button className='w-full h-fit flex items-center justify-center p-3 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all'>
+                <div>
+                    <MoonStarsIcon size={24} weight='fill' className="text-black dark:text-white" />
+                </div>
+            </button>
+        );
     }
 
     return (
@@ -142,7 +148,7 @@ export const SwitchThemeItem = () => {
             className='w-full h-fit flex items-center justify-center p-3 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all'
         >
             <div>
-                {isDarkMode ?
+                {theme === 'dark' ?
                     <SunIcon size={24} weight='fill' className="text-white" /> : <MoonStarsIcon size={24} weight='fill' className="text-black" />
                 }
             </div>
