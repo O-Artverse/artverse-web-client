@@ -9,7 +9,7 @@ import React, { useEffect } from 'react'
 export default function SideBar() {
     return (
         <div className="w-[88px] min-h-screen p-3">
-            <div className='flex flex-col justify-between h-screen w-full bg-white dark:bg-[#1E1B26] rounded-[14px] [box-shadow:0_1px_4px_rgba(0,0,0,0.2)] p-[8px]'>
+            <div className='flex flex-col justify-between h-full w-full bg-white dark:bg-[#1E1B26] rounded-[14px] [box-shadow:0_1px_4px_rgba(0,0,0,0.2)] p-[8px]'>
                 <div className='flex flex-col gap-3'>
                     <ArtverseLogo />
                     <SidebarItem icon={<HouseLineIcon size={24} weight='light' />} activeIcon={<HouseLineIcon size={24} weight='fill' />} href='/explore' />
