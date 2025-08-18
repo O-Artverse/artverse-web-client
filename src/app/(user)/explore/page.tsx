@@ -1,5 +1,5 @@
-import React from 'react'
+import ExplorePage from "@/components/modules/Home/Explore";
 
-export default function ExplorePage() {
-  return <div>ExplorePage</div>;
+export default function Page() {
+  return <ExplorePage />;
 }
