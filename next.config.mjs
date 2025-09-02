@@ -6,7 +6,11 @@ const nextConfig = {
       dynamic: 30,
       static: 180,
     }
-  }
+  },
+  images: {
+    domains: ['images.unsplash.com'],
+    unoptimized: true,
+  },
 };
 
 export default nextConfig;
