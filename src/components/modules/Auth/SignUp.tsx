@@ -1,39 +1,86 @@
 "use client"
 
-import React from 'react'
-import { Button, Card, DatePicker, Input } from '@heroui/react'
-import { MailboxIcon } from '@phosphor-icons/react'
-import dynamic from 'next/dynamic'
+import React, { useState, useEffect } from 'react'
+import { Button, Card, DatePicker, Input, addToast } from '@heroui/react'
 import Image from 'next/image'
 import { Controller, useForm, type SubmitHandler } from 'react-hook-form'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { parseDate, getLocalTimeZone, today } from '@internationalized/date'
 
 import { useRegister } from '@/hooks/mutations/auth.mutation'
-import type { RegisterPostDto } from '@/types/user'
 import { useAuthForm } from '@/contexts/AuthFormContext'
-import { SignUpPostDto } from '@/models/auth/SignUpSchema'
+import { SignUpPostDto, signUpSchema } from '@/models/auth/SignUpSchema'
+import { AuthService } from '@/services/auth.service'
+import { showToast } from '@/utils/showToast'
 
 
 const SignUp = () => {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const postRegister = useRegister()
     const { switchForm } = useAuthForm();
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    useEffect(() => {
+        const errorParam = searchParams.get('error');
+        if (errorParam) {
+            const errorMsg = 'An error occurred during registration.';
+            setErrorMessage(errorMsg);
+            showToast({ title: errorMsg, color: 'error' });
+        }
+    }, [searchParams]);
+
+    useEffect(() => {
+        if (postRegister.isError) {
+            const msg = postRegister.error instanceof Error ? postRegister.error.message : 'Registration failed';
+            addToast({ title: msg, color: 'danger' });
+        }
+    }, [postRegister.isError, postRegister.error]);
 
     const {
         register,
         handleSubmit,
-        watch,
         control,
         formState: { errors },
-    } = useForm<SignUpPostDto>()
+    } = useForm<SignUpPostDto>({
+        resolver: zodResolver(signUpSchema),
+        defaultValues: {
+            birthdate: new Date() // Set a default date instead of undefined
+        }
+    })
+    
     const onSubmit: SubmitHandler<SignUpPostDto> = (data) => {
         postRegister.mutate(data, {
-            onSuccess: () => {
-                // Instead of pushing to sign-in route, switch to sign-in form
+            onSuccess: (response) => {
+                showToast({ 
+                    title: 'Account created successfully! Please sign in to continue.', 
+                    color: 'success' 
+                });
+                // Switch to sign-in form after successful registration
                 switchForm('sign-in');
             },
         });
     }
+
+    const handleGoogleSignUp = () => {
+        try {
+            const googleAuthUrl = AuthService.getGoogleAuthUrl();
+            console.log("Google Auth URL: ", googleAuthUrl);
+            
+            if (!googleAuthUrl.startsWith('http://') && !googleAuthUrl.startsWith('https://')) {
+                console.error("Invalid Google Auth URL (missing protocol):", googleAuthUrl);
+                setErrorMessage("Invalid authentication URL. Please try again later.");
+                return;
+            }
+            
+            window.location.href = googleAuthUrl;
+        } catch (err) {
+            console.error("Error initiating Google sign up:", err);
+            setErrorMessage("Failed to initiate Google sign up. Please try again later.");
+        }
+    };
+    
     return (
         <Card className="p-5 sm:p-8 md:p-10 h-auto w-full max-w-[380px] md:max-w-[424px] shadow-lg rounded-3xl z-10 flex flex-col items-center justify-start bg-white gap-4">
             <div className="flex gap-[18px] w-full justify-center items-center mb-2">
@@ -54,6 +101,8 @@ const SignUp = () => {
                                     labelPlacement="outside"
                                     placeholder="example@artverse.now"
                                     type="email"
+                                    isInvalid={!!errors.email}
+                                    errorMessage={errors.email?.message}
                                     classNames={{
                                         inputWrapper: "w-full !h-[39px] !min-h-0 !py-0 bg-gray-100 border border-gray-300 rounded-xl",
                                         input: "text-black placeholder:text-gray-400 text-base font-normal",
@@ -75,6 +124,8 @@ const SignUp = () => {
                                     labelPlacement="outside"
                                     placeholder="Enter your password"
                                     type="password"
+                                    isInvalid={!!errors.password}
+                                    errorMessage={errors.password?.message}
                                     classNames={{
                                         inputWrapper: "w-full !h-[39px] !min-h-0 !py-0 bg-gray-100 border border-gray-300 rounded-xl",
                                         input: "text-black placeholder:text-gray-400 text-base font-normal",
@@ -90,15 +141,25 @@ const SignUp = () => {
                         render={({ field }) => (
                             <div className="flex flex-col w-full items-center mb-2">
                                 <DatePicker
+                                    showMonthAndYearPickers
                                     variant='faded'
                                     label="Birthdate"
                                     labelPlacement="outside"
+                                    value={field.value ? parseDate(field.value.toISOString().split('T')[0]) : null}
+                                    onChange={(date) => {
+                                        if (date) {
+                                            // Convert DateValue to Date object
+                                            const dateObj = new Date(date.year, date.month - 1, date.day);
+                                            field.onChange(dateObj);
+                                        }
+                                    }}
+                                    isInvalid={!!errors.birthdate}
+                                    errorMessage={errors.birthdate?.message}
                                     classNames={{
                                         inputWrapper: "w-full !h-[39px] !min-h-0 !py-0 bg-gray-100 border border-gray-300 rounded-xl",
                                         input: "text-black placeholder:text-gray-400 text-base font-normal",
                                         label: "text-black mb-1 text-xs"
                                     }}
-                                    onChange={(date) => field.onChange(date)}
                                 />
                             </div>
                         )}
@@ -123,10 +184,12 @@ const SignUp = () => {
                         <span className="text-foreground text-xs">OR</span>
                     </div>
                     <Button 
+                        type="button"
+                        onClick={handleGoogleSignUp}
                         className="flex items-center justify-center gap-2 border rounded-xl border-gray-300 bg-white text-black hover:bg-gray-50 w-full h-[41px]"
                     >
                         <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
-                        <span className="text-xs sm:text-sm">Sign in with Google</span>
+                        <span className="text-xs sm:text-sm">Sign up with Google</span>
                     </Button>
                     <div className="text-xs text-center text-gray-500 w-full mt-1">
                         By continuing, you agree to Artverse's{' '}
@@ -134,7 +197,7 @@ const SignUp = () => {
                         <a href="#" className="underline text-foreground !text-black">Privacy Policy</a>.
                     </div>
                     <div className="text-xs text-center text-gray-500 w-full">
-                        <span>Are ready a member? </span>
+                        <span>Already a member? </span>
                         <button 
                             type="button" 
                             onClick={() => switchForm('sign-in')} 

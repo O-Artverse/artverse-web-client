@@ -75,7 +75,7 @@ function MainLayout({ children }: MainLayoutProps) {
       {/* Main content */}
       <div className="flex flex-col flex-1 gap-3">
         <Topbar toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
-        <div className="relative w-full h-full pl-0 md:pl-0 pb-16 md:pb-0 main-content-with-bottom-nav">
+        <div className="relative w-full h-full pl-3 md:pl-0 !pb-3 pr-3 md:pb-0">
           {children}
           {isNofiticatonOpen && <NofiticationPanel />}
           {isChatOpen && <ChatPanel />}

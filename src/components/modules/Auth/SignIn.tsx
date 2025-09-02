@@ -102,8 +102,8 @@ const SignIn = () => {
                             errorMessage={errors.email?.message}
                             classNames={{
                                 inputWrapper: "w-full !h-[39px] !min-h-0 !py-0 bg-gray-100 border border-gray-300 rounded-xl",
-                                input: "text-black placeholder:text-gray-400 text-base font-normal",
-                                label: "text-black mb-1 text-xs"
+                                input: "!text-black placeholder:text-gray-400 text-base font-normal",
+                                label: "!text-black mb-1 text-xs"
                             }}
                             isInvalid={!!errors.email}
                         />
@@ -119,8 +119,8 @@ const SignIn = () => {
                             errorMessage={errors.password?.message}
                             classNames={{
                                 inputWrapper: "w-full !h-[39px] !min-h-0 !py-0 bg-gray-100 border border-gray-300 rounded-xl",
-                                input: "text-black placeholder:text-gray-400 text-base font-normal",
-                                label: "text-black mb-1 text-xs"
+                                input: "!text-black placeholder:text-gray-400 text-base font-normal",
+                                label: "!text-black mb-1 text-xs"
                             }}
                             isInvalid={!!errors.password}
                         />

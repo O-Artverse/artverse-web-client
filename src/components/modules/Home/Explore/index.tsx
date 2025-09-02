@@ -39,7 +39,7 @@ const Card = React.memo(function Card({ a }: { a: Art }) {
                     unoptimized
                     loading="lazy"
                 />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/0 to-black/50" />
+                <div className="pointer-events-none absolute inset-0" />
                 {hover && (
                     <div className="absolute bottom-2 right-2 z-10 flex gap-2">
                         <ActionBtn label="Share"><ExportIcon size={16} weight="bold" /></ActionBtn>
@@ -96,7 +96,7 @@ export default function ExplorePage() {
     }, [active, skip, loading])
 
     const Masonry = useMemo(() => (
-        <div className="w-full px-2 sm:px-4 box-border">
+        <div className="w-full px-0 sm:px-0 box-border">
             <div className="columns-2 sm:columns-3 md:columns-4 xl:columns-6 2xl:columns-8 gap-3">
                 {items.map((a, idx) => <Card key={`${a.id}-${idx}`} a={a} />)}
             </div>
@@ -104,8 +104,8 @@ export default function ExplorePage() {
     ), [items])
 
     return (
-        <div className="min-h-screen overflow-x-hidden ">
-            <div className="w-full bg-transparent px-3 sm:px-6 py-2">
+        <div className="h-full ">
+            <div className="w-full bg-transparent px-0">
                 <div className="flex flex-wrap gap-2">
                     {CATS.map(c => (
                         <button
@@ -123,13 +123,13 @@ export default function ExplorePage() {
             </div>
 
 
-            <main className="py-3 sm:py-6">{Masonry}</main>
+            <main className="py-3 sm:py-3 h-[calc(100vh-300px)]">{Masonry}</main>
 
-            <div ref={endRef} className="py-8 text-center">
+            {/* <div ref={endRef} className="py-8 text-center">
                 {loading
                     ? <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" />
                     : <p className="text-sm text-gray-500 dark:text-gray-400">Scroll for more…</p>}
-            </div>
+            </div> */}
         </div>
     )
 }

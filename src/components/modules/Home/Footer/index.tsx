@@ -34,7 +34,7 @@ export default function Footer() {
         </div>
         
         <div>
-          <h3 className="font-medium text-lg mb-4">Discover</h3>
+          <h3 className="font-medium text-lg mb-4 !text-black">Discover</h3>
           <ul className="space-y-2">
             <li><a href="#" className="text-sm text-gray-600 hover:text-primary">Artists</a></li>
             <li><a href="#" className="text-sm text-gray-600 hover:text-primary">Collections</a></li>
@@ -44,7 +44,7 @@ export default function Footer() {
         </div>
         
         <div>
-          <h3 className="font-medium text-lg mb-4">Company</h3>
+          <h3 className="font-medium text-lg mb-4 !text-black">Company</h3>
           <ul className="space-y-2">
             <li><a href="#" className="text-sm text-gray-600 hover:text-primary">About Us</a></li>
             <li><a href="#" className="text-sm text-gray-600 hover:text-primary">Careers</a></li>
@@ -54,7 +54,7 @@ export default function Footer() {
         </div>
         
         <div>
-          <h3 className="font-medium text-lg mb-4">Support</h3>
+          <h3 className="font-medium text-lg mb-4 !text-black">Support</h3>
           <ul className="space-y-2">
             <li><a href="#" className="text-sm text-gray-600 hover:text-primary">Help Center</a></li>
             <li><a href="#" className="text-sm text-gray-600 hover:text-primary">Privacy Policy</a></li>

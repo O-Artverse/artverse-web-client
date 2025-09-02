@@ -215,19 +215,19 @@ export default function ArtDetail({ id }: { id: string }) {
     }
 
     return (
-        <div className="min-h-screen text-gray-900 dark:text-gray-100">
-            <div className="mx-auto max-w-[1200px]">
-                {/* Back */}
-                <div className="mb-3 flex items-center gap-2">
-                    <Link
-                        href="/explore"
-                        className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-white bg-[#9C27B0] hover:bg-[#9C27B0]/80"
-                    >
-                        <ArrowLeft size={15} />
-                        <span className="text-[12px]">Back</span>
-                    </Link>
-                </div>
+        <div className="min-h-full h-[calc(100vh-160px)] rounded-xl text-gray-900 dark:text-gray-100">
+            {/* Back */}
+            <div className="mb-3 flex items-center gap-2">
+                <Link
+                    href="/explore"
+                    className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-white bg-[#9C27B0] hover:bg-[#9C27B0]/80"
+                >
+                    <ArrowLeft size={15} />
+                    <span className="text-[12px]">Back</span>
+                </Link>
+            </div>
 
+            <div className="mx-auto h-[calc(100%-38px)] overflow-y-auto">
                 {/* Top: image + info */}
                 <div className="grid grid-cols-1 md:grid-cols-[322px,1fr] lg:grid-cols-[322px,1fr] gap-4">
                     {/* Left image */}
@@ -428,7 +428,7 @@ export default function ArtDetail({ id }: { id: string }) {
 
                 {/* related */}
                 <div className="mt-8 mb-2 font-semibold">Related artworks</div>
-                <div className="w-full px-1 sm:px-2 box-border">
+                <div className="w-full box-border">
                     <div className="columns-2 sm:columns-3 md:columns-4 xl:columns-6 gap-2">
                         {related.map((r, i) => (
                             <Link key={`${r.id}-${i}`} href={`/explore/${r.id}`} className="mb-2 break-inside-avoid block overflow-hidden rounded-2xl bg-gray-100 ring-1 ring-black/5 dark:bg-neutral-900 dark:ring-white/10">

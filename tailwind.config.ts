@@ -1,5 +1,5 @@
 import type { Config } from "tailwindcss";
-
+import scrollbarHide from 'tailwind-scrollbar-hide'
 const {heroui} = require("@heroui/react");
 
 const config: Config = {
@@ -23,6 +23,6 @@ const config: Config = {
     },
   },
   darkMode: "class",
-  plugins: [heroui()],
+  plugins: [heroui(), scrollbarHide],
 };
 export default config;

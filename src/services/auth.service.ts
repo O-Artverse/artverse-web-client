@@ -9,13 +9,24 @@ import { SignUpPostDto } from "@/models/auth/SignUpSchema";
 export const AuthService = {
   async register(dto: SignUpPostDto) {
     try {
-      const response: RegisterResponsePostDto = await axiosClient.post(
+      if (!dto.birthdate) {
+        throw new Error("Birthdate is required");
+      }
+
+      const response = await axiosClient.post(
         `/auth/register`,
-        dto
+        {
+          email: dto.email,
+          password: dto.password,
+          birthdate: dto.birthdate.toISOString().split('T')[0] // Convert to YYYY-MM-DD format
+        }
       );
-      return { response };
+      
+      // Return response data without storing tokens
+      // User will need to sign in manually after registration
+      return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Login failed");
+      throw new Error(error.response?.data?.message || "Registration failed");
     }
   },
   async login(dto: LoginPostDto) {
