@@ -19,3 +19,10 @@ export const QUERY_KEYS = {
         getArtwork: (id: string) => ['artwork', id],    
     },
 };
+
+export const queryKeys = {
+  CHAT_ROOMS: 'chat-rooms',
+  CHAT_MESSAGES: 'chat-messages',
+  FAVORITE_ARTWORKS: 'favorite-artworks',
+  SEARCH_USERS: 'search-users',
+} as const;

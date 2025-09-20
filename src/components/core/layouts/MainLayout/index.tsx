@@ -5,6 +5,7 @@ import SideBar from "./Sidebar"
 import Topbar from "./TopBar"
 import MobileNav from './MobileNav'
 import { List, X } from '@phosphor-icons/react'
+import ChatModule from '@/components/modules/Chat'
 
 interface MainLayoutProps {
   readonly children: React.ReactNode
@@ -90,16 +91,17 @@ function MainLayout({ children }: MainLayoutProps) {
 
 export default MainLayout
 
-
-//Tách thành file riêng
 export const ChatPanel = () => {
-  return <div className="absolute top-0 left-0 z-10 bg-white/70 h-[calc(100%-12px)] w-full md:w-[468px] p-3 rounded-xl [box-shadow:0_1px_4px_rgba(0,0,0,0.2)] backdrop-blur-sm max-h-[calc(100vh-160px)] md:max-h-[calc(100vh-100px)] overflow-y-auto">
-    Chat
-  </div>
+  return (
+    <div className="absolute top-0 left-0 z-10 h-[calc(100%-12px)] w-full md:w-[468px] rounded-xl max-h-[calc(100vh-180px)] md:max-h-[calc(100vh-100px)] overflow-y-auto">
+      <ChatModule />
+    </div>
+  )
 }
+
 //Tách thành file riêng
 export const NofiticationPanel = () => {
   return <div className="absolute top-0 left-0 z-10 bg-white/70 h-[calc(100%-12px)] w-full md:w-[468px] p-3 rounded-xl [box-shadow:0_1px_4px_rgba(0,0,0,0.2)] backdrop-blur-sm max-h-[calc(100vh-160px)] md:max-h-[calc(100vh-100px)] overflow-y-auto">
     Notification
-  </div>
+    </div>
 } 

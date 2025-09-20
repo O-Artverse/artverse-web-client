@@ -8,6 +8,7 @@ import { UIProvider } from "./UIProdivder";
 import ThemeProvider from "./ThemeProvider";
 import { SearchProvider } from "./SearchProvider";
 import { SidebarProvider } from "@/contexts/SidebarContext";
+import { ChatProvider } from "@/contexts/ChatContext";
 
 interface ComponentProps {
   children: React.ReactNode;
@@ -22,9 +23,11 @@ const AppProvider: FC<ComponentProps> = ({ children }) => {
             <UIProvider>
               <AuthProvider>
                 <SidebarProvider>
+                <ChatProvider>
                   <SearchProvider>
                     {children}
                   </SearchProvider>
+                  </ChatProvider>
                 </SidebarProvider>
               </AuthProvider>
             </UIProvider>
