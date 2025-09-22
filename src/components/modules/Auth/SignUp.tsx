@@ -46,20 +46,42 @@ const SignUp = () => {
     } = useForm<SignUpPostDto>({
         resolver: zodResolver(signUpSchema),
         defaultValues: {
-            birthdate: new Date() // Set a default date instead of undefined
+            email: '',
+            password: '',
+            birthdate: undefined // Let user select their birthdate
         }
     })
     
     const onSubmit: SubmitHandler<SignUpPostDto> = (data) => {
+        console.log('SignUp form submitted with data:', data);
+
+        // Validate birthdate is provided
+        if (!data.birthdate) {
+            showToast({
+                title: 'Please select your birthdate',
+                color: 'error'
+            });
+            return;
+        }
+
         postRegister.mutate(data, {
             onSuccess: (response) => {
-                showToast({ 
-                    title: 'Account created successfully! Please sign in to continue.', 
-                    color: 'success' 
+                console.log('Registration successful:', response);
+                showToast({
+                    title: 'Account created successfully! Please sign in to continue.',
+                    color: 'success'
                 });
                 // Switch to sign-in form after successful registration
                 switchForm('sign-in');
             },
+            onError: (error) => {
+                console.error('Registration error:', error);
+                const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+                showToast({
+                    title: errorMessage,
+                    color: 'error'
+                });
+            }
         });
     }
 
@@ -145,12 +167,16 @@ const SignUp = () => {
                                     variant='faded'
                                     label="Birthdate"
                                     labelPlacement="outside"
-                                    value={field.value ? parseDate(field.value.toISOString().split('T')[0]) : null}
-                                    onChange={(date) => {
+                                    placeholder="Select your birthdate"
+                                    //@ts-ignore
+                                    value={field.value ? parseDate(field.value.toISOString().split('T')[0]) : undefined}
+                                    onChange={(date: any) => {
                                         if (date) {
                                             // Convert DateValue to Date object
                                             const dateObj = new Date(date.year, date.month - 1, date.day);
                                             field.onChange(dateObj);
+                                        } else {
+                                            field.onChange(undefined);
                                         }
                                     }}
                                     isInvalid={!!errors.birthdate}

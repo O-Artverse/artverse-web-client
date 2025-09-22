@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react'
 
 const Home = () => {
     const [loading, setLoading] = useState(true)
-    const { user, isAuthenticated, isLoading } = useAppSelector((state) => state.authentication)
+    const { user, isAuthenticated, isLoading } = useAppSelector((state) => state.auth)
 
     useEffect(() => {
         const timer = setTimeout(() => {

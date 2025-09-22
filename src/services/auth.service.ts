@@ -91,15 +91,13 @@ export const checkAuth = async () => {
 };
 
 export const refreshTokens = async (refreshToken: string) => {
-  {
-    try {
-      const response = await axiosClient.post(`/auth/refresh-tokens`, {
-        refreshToken,
-      });
+  try {
+    const response = await axiosClient.post(`/auth/refresh`, {
+      refreshToken,
+    });
 
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || "An error occurred");
-    }
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "An error occurred");
   }
 };

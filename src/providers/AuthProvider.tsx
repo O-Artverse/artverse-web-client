@@ -7,7 +7,7 @@ import webStorageClient from '@/utils/webStorageClient';
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
-  const { isAuthenticated, token, isLoading } = useAppSelector((state) => state.authentication);
+  const { isAuthenticated, token, isLoading } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     if (token && !isAuthenticated && !isLoading) {

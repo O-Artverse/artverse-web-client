@@ -53,6 +53,25 @@ const authSlice = createSlice({
       webStorageClient.remove(constants.ACCESS_TOKEN);
       webStorageClient.remove(constants.REFRESH_TOKEN);
     },
+    updateUser: (state, action) => {
+      if (state.user) {
+        state.user = { ...state.user, ...action.payload };
+      }
+    },
+    upgradeToBusinessSuccess: (state, action) => {
+      if (state.user) {
+        state.user.role = 'BUSINESS';
+        state.user.businessType = action.payload.businessType;
+        if (action.payload.organization) {
+          state.user.ownedOrganizations = [action.payload.organization];
+        }
+
+        // Update user data with the returned user object if provided
+        if (action.payload.user) {
+          state.user = { ...state.user, ...action.payload.user };
+        }
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -77,5 +96,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { loginSuccess, logout } = authSlice.actions;
+export const { loginSuccess, logout, updateUser, upgradeToBusinessSuccess } = authSlice.actions;
 export default authSlice.reducer;

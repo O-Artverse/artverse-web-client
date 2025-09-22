@@ -4,16 +4,19 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import { CaretDown } from '@phosphor-icons/react/dist/ssr';
-import { useAppDispatch } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { logout } from '@/store/slices/authSlice';
 import { useRouter } from 'next/navigation';
 import { AuthService } from '@/services/auth.service';
+import { SwitchToArtistModal } from '@/components/modals/SwitchToArtistModal';
 
 export const UserMenu = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const avatarRef = useRef<HTMLDivElement | null>(null);
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const { user } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -33,18 +36,37 @@ export const UserMenu = () => {
     try {
       // Call the logout function from AuthService to clear cookies/storage
       await AuthService.logout();
-      
+
       // Dispatch logout action to update Redux state
       dispatch(logout());
-      
+
       // Close the menu
       setShowUserMenu(false);
-      
+
       // Redirect to home page or login page
       router.push('/');
     } catch (error) {
       console.error('Error signing out:', error);
     }
+  };
+
+  const handleUpgradeClick = () => {
+    setShowUserMenu(false);
+    setShowUpgradeModal(true);
+  };
+
+  const getDisplayName = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    return user?.name || user?.username || 'User';
+  };
+
+  const getRoleDisplay = () => {
+    if (user?.role === 'BUSINESS') {
+      return user?.businessType === 'ARTIST' ? 'Artist' : 'Organization';
+    }
+    return 'Personal';
   };
 
   return (
@@ -84,14 +106,24 @@ export const UserMenu = () => {
               />
             </div>
             <div className='flex flex-col gap-[2px]'>
-              <h3 className='text-[16px] text-black font-bold dark:text-white'>James Anderson</h3>
-              <p className='text-gray-500 text-[12px] dark:text-gray-400'>Personal</p>
-              <p className='text-gray-500 text-[12px] dark:text-gray-400'>james@gmail.com</p>
+              <h3 className='text-[16px] text-black font-bold dark:text-white'>{getDisplayName()}</h3>
+              <p className='text-gray-500 text-[12px] dark:text-gray-400'>{getRoleDisplay()}</p>
+              <p className='text-gray-500 text-[12px] dark:text-gray-400'>{user?.email || 'user@example.com'}</p>
             </div>
           </div>
-          <Link href="/profile" className='rounded-md block px-3 py-[8px] font-bold text-sm text-gray-700 hover:bg-gray-100 dark:text-white/60 dark:hover:bg-black transition-all'>
-          Switch to an artist account
-          </Link>
+          {user?.role === 'USER' && (
+            <button
+              onClick={handleUpgradeClick}
+              className='rounded-md block px-3 py-[8px] font-bold text-sm text-gray-700 hover:bg-gray-100 dark:text-white/60 dark:hover:bg-black transition-all w-full text-left'
+            >
+              Switch to an artist account
+            </button>
+          )}
+          {user?.role === 'BUSINESS' && (
+            <Link href="/business" className='rounded-md block px-3 py-[8px] font-bold text-sm text-gray-700 hover:bg-gray-100 dark:text-white/60 dark:hover:bg-black transition-all'>
+              Business Dashboard
+            </Link>
+          )}
           <p className='text-[12px] px-3 py-2 text-black/60 dark:text-white/60'>Your account</p>
           <Link href="/profile" className='rounded-md block px-3 py-[8px] font-bold text-sm text-gray-700 hover:bg-gray-100 dark:text-white/60 dark:hover:bg-black transition-all'>
           Add more accounts
@@ -104,6 +136,12 @@ export const UserMenu = () => {
           </button>
         </div>
       )}
+
+      {/* Upgrade Modal */}
+      <SwitchToArtistModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+      />
     </div>
   );
 }; 

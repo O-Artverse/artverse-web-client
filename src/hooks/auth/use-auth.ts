@@ -11,7 +11,7 @@ import constants from '@/settings/constants';
 
 
 export function useAuth() {
-  const { user } = useAppSelector((state: RootState) => state.authentication);
+  const { user } = useAppSelector((state: RootState) => state.auth);
   const dispatch = useAppDispatch();
   const accessToken = Cookies.get(constants.ACCESS_TOKEN);
   const pathName = usePathname();

@@ -11,11 +11,11 @@ const redirectToLogin = () => {
   if (typeof window !== 'undefined') {
     const currentPath = window.location.pathname;
 
-    Cookies.remove('accessToken');
-    Cookies.remove('refreshToken');
+    Cookies.remove(constants.ACCESS_TOKEN);
+    Cookies.remove(constants.REFRESH_TOKEN);
 
-    if (!currentPath.includes('/login')) {
-      window.location.href = `/login`;
+    if (!currentPath.includes('/sign-in')) {
+      window.location.href = `/sign-in`;
     }
   }
 };
@@ -28,14 +28,14 @@ const getAccessToken = async () => {
 
   if (isClient) {
     // Client-side - use direct cookie access
-    accessToken = getClientCookie('accessToken');
-    refreshToken = getClientCookie('refreshToken');
+    accessToken = getClientCookie(constants.ACCESS_TOKEN);
+    refreshToken = getClientCookie(constants.REFRESH_TOKEN);
 
     // Fallback to document.cookie if needed
     if (!accessToken || !refreshToken) {
       const cookies = document.cookie.split('; ');
-      const tokenCookie = cookies.find((cookie) => cookie.startsWith('accessToken='));
-      const refreshCookie = cookies.find((cookie) => cookie.startsWith('refreshToken='));
+      const tokenCookie = cookies.find((cookie) => cookie.startsWith(`${constants.ACCESS_TOKEN}=`));
+      const refreshCookie = cookies.find((cookie) => cookie.startsWith(`${constants.REFRESH_TOKEN}=`));
 
       if (tokenCookie) accessToken = tokenCookie.split('=')[1];
       if (refreshCookie) refreshToken = refreshCookie.split('=')[1];
@@ -43,8 +43,8 @@ const getAccessToken = async () => {
   } else {
     // Server-side - use server cookie access
     try {
-      accessToken = await getServerCookie('accessToken');
-      refreshToken = await getServerCookie('refreshToken');
+      accessToken = await getServerCookie(constants.ACCESS_TOKEN);
+      refreshToken = await getServerCookie(constants.REFRESH_TOKEN);
     } catch (error) {
       // Handle server cookie access failure
       console.error('Server error getting identifier', error);
@@ -97,7 +97,7 @@ axiosClient.interceptors.response.use(
     const { refreshToken } = await getAccessToken();
 
     if (error.response?.status === 401 && !originalRequest._retry) {
-      if (!refreshToken || originalRequest.url === '/auth/refresh-tokens') {
+      if (!refreshToken || originalRequest.url === '/auth/refresh') {
         redirectToLogin();
 
         return Promise.reject(error);
