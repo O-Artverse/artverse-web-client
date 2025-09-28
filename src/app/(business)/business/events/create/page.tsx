@@ -244,13 +244,13 @@ export default function CreateEventPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <DatePicker
                   label="Start Date"
-                  value={formData.startDate}
+                  value={formData.startDate as any}
                   onChange={(date) => handleInputChange('startDate', date)}
                   isRequired
                 />
                 <DatePicker
                   label="End Date"
-                  value={formData.endDate}
+                  value={formData.endDate as any}
                   onChange={(date) => handleInputChange('endDate', date)}
                   isRequired
                 />
