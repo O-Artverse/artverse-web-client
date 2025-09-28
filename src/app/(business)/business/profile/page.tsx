@@ -81,7 +81,7 @@ export default function BusinessProfilePage() {
                 )}
                 <span className="flex items-center gap-1 text-sm opacity-90">
                   <Calendar size={16} />
-                  Joined {new Date(user.createdAt).getFullYear()}
+                  Joined {user.createdAt ? new Date(user.createdAt).getFullYear() : new Date().getFullYear()}
                 </span>
               </div>
               {user.bio && (

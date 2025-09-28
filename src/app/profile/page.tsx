@@ -127,7 +127,7 @@ export default function UserProfilePage() {
                   )}
                   <span className="flex items-center gap-2 text-sm bg-white/10 px-3 py-2 rounded-full backdrop-blur-sm">
                     <Calendar size={16} />
-                    Member since {new Date(user.createdAt).getFullYear()}
+                    Member since {user.createdAt ? new Date(user.createdAt).getFullYear() : new Date().getFullYear()}
                   </span>
                 </div>
 

@@ -6,10 +6,13 @@ export interface User {
     firstName?: string
     lastName?: string
     avatar?: string
+    avatarPath?: string  // Added for avatar path compatibility
     role: 'ADMIN' | 'USER' | 'BUSINESS'
     businessType?: 'ARTIST' | 'ORGANIZATION' | null
-    birthdate: string
+    birthdate?: string  // Made optional to handle undefined cases
     description?: string
+    bio?: string  // Added for bio compatibility
+    city?: string  // Added for location display
     website?: string
     instagram?: string
     facebook?: string
