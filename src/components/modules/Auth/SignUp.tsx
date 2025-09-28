@@ -167,7 +167,6 @@ const SignUp = () => {
                                     variant='faded'
                                     label="Birthdate"
                                     labelPlacement="outside"
-                                    placeholder="Select your birthdate"
                                     //@ts-ignore
                                     value={field.value ? parseDate(field.value.toISOString().split('T')[0]) : undefined}
                                     onChange={(date: any) => {
