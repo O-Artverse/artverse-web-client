@@ -6,6 +6,17 @@ export interface UpgradeToBusinessDto {
   organizationDescription?: string;
 }
 
+export interface UpdateProfileDto {
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  description?: string;
+  website?: string;
+  instagram?: string;
+  twitter?: string;
+  facebook?: string;
+}
+
 export const UserService = {
   async upgradeToBusinessAccount(dto: UpgradeToBusinessDto) {
     try {
@@ -22,6 +33,31 @@ export const UserService = {
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Failed to get user profile');
+    }
+  },
+
+  async updateProfile(dto: UpdateProfileDto) {
+    try {
+      const response = await axiosClient.patch('/users/update-profile', dto);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to update profile');
+    }
+  },
+
+  async uploadAvatar(file: File) {
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const response = await axiosClient.post('/users/upload-avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to upload avatar');
     }
   },
 

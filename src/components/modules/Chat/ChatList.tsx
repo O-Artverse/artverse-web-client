@@ -7,6 +7,7 @@ import { MagnifyingGlass, PencilSimpleLineIcon, SealCheckIcon, XIcon } from '@ph
 import Image from 'next/image';
 import { XCircleIcon } from '@phosphor-icons/react/dist/ssr';
 import { useTheme } from 'next-themes';
+import { getUserAvatarUrl } from '@/utils/imageUtils';
 
 interface ChatListProps {
   onSelectRoom: (room: ChatRoom) => void;
@@ -17,12 +18,13 @@ interface ChatListProps {
 // Helper function to render avatar
 export const renderAvatar = (user: ChatUser, size: 'sm' | 'md' = 'md') => {
   const sizeClasses = size === 'sm' ? 'w-8 h-8' : 'w-10 h-10';
+  const avatarUrl = getUserAvatarUrl(user.avatar);
 
-  if (user.avatar) {
+  if (avatarUrl) {
     return (
       <div className={`${sizeClasses} rounded-full overflow-hidden flex-shrink-0`}>
         <Image
-          src={user.avatar}
+          src={avatarUrl}
           alt={user.name}
           width={size === 'sm' ? 32 : 40}
           height={size === 'sm' ? 32 : 40}

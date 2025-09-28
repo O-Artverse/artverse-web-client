@@ -7,13 +7,16 @@ import webStorageClient from '@/utils/webStorageClient';
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
-  const { isAuthenticated, token, isLoading } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, token, isLoading, user } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
-    if (token && !isAuthenticated && !isLoading) {
+    const accessToken = webStorageClient.getToken();
+
+    // If we have a token but no user data or not authenticated, fetch user
+    if (accessToken && (!user || !isAuthenticated) && !isLoading) {
       dispatch(fetchUser());
     }
-  }, [dispatch, token, isAuthenticated, isLoading]);
+  }, [dispatch, user, isAuthenticated, isLoading]);
 
   return <>{children}</>;
 }

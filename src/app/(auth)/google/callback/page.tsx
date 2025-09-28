@@ -60,5 +60,5 @@ export default function AuthCallback() {
     }
   }, [dispatch, router, searchParams]);
 
-  return null;
+  return <div>Callback</div>;
 } 

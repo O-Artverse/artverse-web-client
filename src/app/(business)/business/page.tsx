@@ -1,180 +1,370 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Card, CardBody, CardHeader, Button, Chip } from '@heroui/react';
 import { useAppSelector } from '@/store/hooks';
-import { useGetBusinessDashboard } from '@/hooks/mutations/user.mutation';
-import { showToast } from '@/utils/showToast';
+import { Card, CardBody, CardHeader, Button } from '@heroui/react';
+import {
+  Palette,
+  Users,
+  Calendar,
+  TrendUp,
+  Eye,
+  Heart,
+  CurrencyDollar,
+  Plus
+} from '@phosphor-icons/react';
+import Link from 'next/link';
 
-export default function BusinessPage() {
+interface ArtistStats {
+  totalArtworks: number;
+  totalViews: number;
+  totalLikes: number;
+  totalRevenue: number;
+  recentArtworks: Array<{
+    id: number;
+    title: string;
+    digitalPrice: number;
+    physicalPrice: number;
+    hasPhysicalVersion: boolean;
+    views: number;
+    likes: number;
+  }>;
+}
+
+interface OrgStats {
+  totalArtists: number;
+  totalArtworks: number;
+  activeEvents: number;
+  totalRevenue: number;
+  recentEvents: Array<{
+    id: number;
+    title: string;
+    date: string;
+    attendees: number;
+  }>;
+}
+
+export default function BusinessDashboardPage() {
   const { user } = useAppSelector((state) => state.auth);
-  const [dashboardData, setDashboardData] = useState<any>(null);
-  const getDashboard = useGetBusinessDashboard();
+  const isArtist = user?.businessType === 'ARTIST';
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const data = await getDashboard.mutateAsync();
-        setDashboardData(data);
-      } catch (error: any) {
-        showToast({
-          title: error.message || 'Failed to load dashboard',
-          color: 'error'
-        });
-      }
-    };
-
-    fetchDashboard();
-  }, []);
-
-  const getBusinessTypeDisplay = () => {
-    if (user?.businessType === 'ARTIST') return 'Artist Account';
-    if (user?.businessType === 'ORGANIZATION') return 'Organization Account';
-    return 'Business Account';
+  // Mock data for demonstration
+  const artistStats: ArtistStats = {
+    totalArtworks: 24,
+    totalViews: 15420,
+    totalLikes: 892,
+    totalRevenue: 12500,
+    recentArtworks: [
+      { id: 1, title: "Sunset Dreams", digitalPrice: 25, physicalPrice: 850, hasPhysicalVersion: true, views: 324, likes: 45 },
+      { id: 2, title: "Urban Rhythm", digitalPrice: 35, physicalPrice: 1200, hasPhysicalVersion: true, views: 567, likes: 78 },
+      { id: 3, title: "Nature's Call", digitalPrice: 15, physicalPrice: 0, hasPhysicalVersion: false, views: 234, likes: 32 }
+    ]
   };
 
-  if (getDashboard.isPending) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-lg">Loading dashboard...</div>
-        </div>
-      </div>
-    );
-  }
+  const orgStats: OrgStats = {
+    totalArtists: 12,
+    totalArtworks: 156,
+    activeEvents: 3,
+    totalRevenue: 45000,
+    recentEvents: [
+      { id: 1, title: "Modern Art Exhibition", date: "2025-10-15", attendees: 125 },
+      { id: 2, title: "Digital Artists Showcase", date: "2025-11-02", attendees: 89 },
+      { id: 3, title: "Contemporary Art Fair", date: "2025-11-20", attendees: 0 }
+    ]
+  };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Business Dashboard
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
-              Welcome back, {user?.username}!
-            </p>
-          </div>
-          <Chip
-            color="primary"
-            variant="flat"
-            className="text-sm"
-          >
-            {getBusinessTypeDisplay()}
-          </Chip>
+    <div className="space-y-6">
+      {/* Welcome Section */}
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700 rounded-lg p-6 text-white shadow-lg">
+        <h1 className="text-2xl font-bold mb-2">
+          Welcome back, {user?.firstName}!
+        </h1>
+        <p className="text-blue-100">
+          {isArtist
+            ? "Ready to showcase your creativity to the world?"
+            : "Let's manage your organization and upcoming events."
+          }
+        </p>
+        <div className="mt-4 flex gap-3">
+          {isArtist ? (
+            <Link href="/business/artworks/create">
+              <Button
+                color="secondary"
+                variant="solid"
+                startContent={<Plus size={16} />}
+                className="bg-white/20 hover:bg-white/30 backdrop-blur border-white/20"
+              >
+                Create New Artwork
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/business/events/create">
+              <Button
+                color="secondary"
+                variant="solid"
+                startContent={<Plus size={16} />}
+                className="bg-white/20 hover:bg-white/30 backdrop-blur border-white/20"
+              >
+                Create New Event
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card>
-          <CardBody className="text-center">
-            <div className="text-2xl font-bold text-primary">0</div>
-            <div className="text-sm text-gray-600">Total Artworks</div>
-          </CardBody>
-        </Card>
-        <Card>
-          <CardBody className="text-center">
-            <div className="text-2xl font-bold text-green-600">$0</div>
-            <div className="text-sm text-gray-600">Total Sales</div>
-          </CardBody>
-        </Card>
-        <Card>
-          <CardBody className="text-center">
-            <div className="text-2xl font-bold text-blue-600">0</div>
-            <div className="text-sm text-gray-600">Profile Views</div>
-          </CardBody>
-        </Card>
-        <Card>
-          <CardBody className="text-center">
-            <div className="text-2xl font-bold text-purple-600">0</div>
-            <div className="text-sm text-gray-600">Followers</div>
-          </CardBody>
-        </Card>
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {isArtist ? (
+          <>
+            <Card>
+              <CardBody className="flex flex-row items-center gap-4 p-6">
+                <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
+                  <Palette size={24} className="text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Artworks</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {isArtist ? artistStats.totalArtworks : orgStats.totalArtworks}
+                  </p>
+                </div>
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardBody className="flex flex-row items-center gap-4 p-6">
+                <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
+                  <Eye size={24} className="text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Views</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {isArtist ? artistStats.totalViews.toLocaleString() : '0'}
+                  </p>
+                </div>
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardBody className="flex flex-row items-center gap-4 p-6">
+                <div className="p-3 bg-red-100 dark:bg-red-900 rounded-full">
+                  <Heart size={24} className="text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Likes</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {isArtist ? artistStats.totalLikes : 0}
+                  </p>
+                </div>
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardBody className="flex flex-row items-center gap-4 p-6">
+                <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-full">
+                  <CurrencyDollar size={24} className="text-yellow-600 dark:text-yellow-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Revenue</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    ${(isArtist ? artistStats.totalRevenue : orgStats.totalRevenue).toLocaleString()}
+                  </p>
+                </div>
+              </CardBody>
+            </Card>
+          </>
+        ) : (
+          <>
+            <Card>
+              <CardBody className="flex flex-row items-center gap-4 p-6">
+                <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
+                  <Users size={24} className="text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Artists</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {isArtist ? 0 : orgStats.totalArtists}
+                  </p>
+                </div>
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardBody className="flex flex-row items-center gap-4 p-6">
+                <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
+                  <Palette size={24} className="text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Artworks</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {isArtist ? artistStats.totalArtworks : orgStats.totalArtworks}
+                  </p>
+                </div>
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardBody className="flex flex-row items-center gap-4 p-6">
+                <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
+                  <Calendar size={24} className="text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Active Events</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {isArtist ? 0 : orgStats.activeEvents}
+                  </p>
+                </div>
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardBody className="flex flex-row items-center gap-4 p-6">
+                <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-full">
+                  <TrendUp size={24} className="text-yellow-600 dark:text-yellow-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Revenue</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    ${(isArtist ? artistStats.totalRevenue : orgStats.totalRevenue).toLocaleString()}
+                  </p>
+                </div>
+              </CardBody>
+            </Card>
+          </>
+        )}
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <h3 className="text-xl font-semibold">Quick Actions</h3>
-          </CardHeader>
-          <CardBody className="space-y-4">
-            <Button
-              color="primary"
-              size="lg"
-              className="w-full"
-              startContent={<span>📸</span>}
-            >
-              Upload New Artwork
-            </Button>
-            <Button
-              color="default"
-              variant="bordered"
-              size="lg"
-              className="w-full"
-              startContent={<span>📁</span>}
-            >
-              Create Album
-            </Button>
-            <Button
-              color="default"
-              variant="bordered"
-              size="lg"
-              className="w-full"
-              startContent={<span>👤</span>}
-            >
-              Edit Profile
-            </Button>
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <h3 className="text-xl font-semibold">Account Information</h3>
-          </CardHeader>
-          <CardBody className="space-y-4">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Account Type:</span>
-              <span className="font-medium">{getBusinessTypeDisplay()}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Username:</span>
-              <span className="font-medium">@{user?.username}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Email:</span>
-              <span className="font-medium">{user?.email}</span>
-            </div>
-            {user?.ownedOrganizations && user.ownedOrganizations.length > 0 && (
-              <div className="flex justify-between">
-                <span className="text-gray-600">Organization:</span>
-                <span className="font-medium">{user.ownedOrganizations[0].name}</span>
-              </div>
-            )}
-          </CardBody>
-        </Card>
-      </div>
-
-      {/* Features Available */}
-      {dashboardData && (
-        <Card className="mt-8">
-          <CardHeader>
-            <h3 className="text-xl font-semibold">Available Features</h3>
+            <h3 className="text-lg font-semibold">
+              {isArtist ? 'Recent Artworks' : 'Upcoming Events'}
+            </h3>
           </CardHeader>
           <CardBody>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {dashboardData.features?.map((feature: string, index: number) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <span className="text-green-500">✓</span>
-                  <span>{feature}</span>
-                </div>
-              ))}
+            <div className="space-y-4">
+              {isArtist ? (
+                artistStats.recentArtworks.map((artwork) => (
+                  <div key={artwork.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white">
+                        {artwork.title}
+                      </h4>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center gap-3">
+                          <span className="flex items-center gap-1">
+                            <span className="text-blue-600 dark:text-blue-400">💻</span>
+                            ${artwork.digitalPrice}
+                          </span>
+                          {artwork.hasPhysicalVersion && (
+                            <span className="flex items-center gap-1">
+                              <span className="text-green-600 dark:text-green-400">📦</span>
+                              ${artwork.physicalPrice}
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1">
+                          {artwork.views} views • {artwork.likes} likes
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                orgStats.recentEvents.map((event) => (
+                  <div key={event.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-white">
+                        {event.title}
+                      </h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {event.date} • {event.attendees} registered
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </CardBody>
         </Card>
-      )}
+
+        <Card>
+          <CardHeader>
+            <h3 className="text-lg font-semibold">Quick Actions</h3>
+          </CardHeader>
+          <CardBody>
+            <div className="grid grid-cols-1 gap-3">
+              {isArtist ? (
+                <>
+                  <Link href="/business/artworks/create">
+                    <Button
+                      variant="flat"
+                      color="primary"
+                      className="w-full justify-start"
+                      startContent={<Plus size={16} />}
+                    >
+                      Upload New Artwork
+                    </Button>
+                  </Link>
+                  <Link href="/business/artworks">
+                    <Button
+                      variant="flat"
+                      color="default"
+                      className="w-full justify-start"
+                      startContent={<Palette size={16} />}
+                    >
+                      Manage Artworks
+                    </Button>
+                  </Link>
+                  <Link href="/business/organizations">
+                    <Button
+                      variant="flat"
+                      color="default"
+                      className="w-full justify-start"
+                      startContent={<Users size={16} />}
+                    >
+                      Join Organization
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/business/events/create">
+                    <Button
+                      variant="flat"
+                      color="primary"
+                      className="w-full justify-start"
+                      startContent={<Plus size={16} />}
+                    >
+                      Create New Event
+                    </Button>
+                  </Link>
+                  <Link href="/business/artists">
+                    <Button
+                      variant="flat"
+                      color="default"
+                      className="w-full justify-start"
+                      startContent={<Users size={16} />}
+                    >
+                      Invite Artists
+                    </Button>
+                  </Link>
+                  <Link href="/business/artworks">
+                    <Button
+                      variant="flat"
+                      color="default"
+                      className="w-full justify-start"
+                      startContent={<Palette size={16} />}
+                    >
+                      View Organization Artworks
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </div>
+          </CardBody>
+        </Card>
+      </div>
     </div>
   );
 }

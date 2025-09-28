@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { DeleteIcon } from '@/components/common/icons/DeleteIcon';
 import SealCheckUrl from "@/components/common/icons/SealCheck.svg";
+import { getUserAvatarUrl } from '@/utils/imageUtils';
 
 export const SearchInput = () => {
   const searchRef = useRef<HTMLDivElement | null>(null);
@@ -117,9 +118,9 @@ export const SearchInput = () => {
                     className='flex items-center px-[11px] py-[12px] hover:bg-gray-200 dark:hover:bg-black rounded-md transition-all'
                   >
                     <div className='w-9 h-9 rounded-full bg-gray-300 dark:bg-gray-600 mr-[11px] overflow-hidden'>
-                      {artist.avatar ?
+                      {getUserAvatarUrl(artist.avatar) ?
                         <Image
-                          src={`${artist.avatar}`}
+                          src={getUserAvatarUrl(artist.avatar)!}
                           alt="artist"
                           width={38}
                           height={38}

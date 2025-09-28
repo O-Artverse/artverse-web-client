@@ -88,6 +88,8 @@ export const SideBarItemUnRoute = ({ icon, activeIcon, unRouteKey }: SidebarItem
 export const SettingItem = () => {
     const [isOpen, setIsOpen] = React.useState(false);
 
+    const router = useRouter();
+
     return <Popover placement="right" onOpenChange={(open) => setIsOpen(open)} className=''>
         <PopoverTrigger>
             <div className='w-full h-fit flex items-center justify-center  cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all'>
@@ -100,16 +102,20 @@ export const SettingItem = () => {
             <div className="px-3 py-4">
                 <div className="text-small font-bold mb-2 dark:text-white">Settings</div>
                 <div className="flex flex-col gap-2">
-                    <button className="text-tiny hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-white p-2 rounded-lg flex items-center gap-2 w-full">
+                    <button className="text-tiny hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-white p-2 rounded-lg flex items-center gap-2 w-full" onClick={() => router.push('/settings?active=edit-profile')}>
                         Account Settings
                     </button>
-                    <button className="text-tiny hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-white p-2 rounded-lg flex items-center gap-2 w-full">
+                    <button className="text-tiny hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-white p-2 rounded-lg flex items-center gap-2 w-full"
+                        onClick={() => router.push('/settings/privacy-security')}
+                    >
                         Privacy & Security
                     </button>
                     <button className="text-tiny hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-white p-2 rounded-lg flex items-center gap-2 w-full">
                         Help & Support
                     </button>
-                    <button className="text-tiny hover:bg-gray-200 dark:hover:bg-gray-700 p-2 rounded-lg flex items-center gap-2 w-full text-red-500 dark:text-red-400">
+                    <button className="text-tiny hover:bg-gray-200 dark:hover:bg-gray-700 p-2 rounded-lg flex items-center gap-2 w-full text-red-500 dark:text-red-400"
+                        onClick={() => {}}
+                    >
                         Log Out
                     </button>
                 </div>

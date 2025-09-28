@@ -106,8 +106,8 @@ export const SwitchToArtistModal: React.FC<SwitchToArtistModalProps> = ({
     >
       <ModalContent>
         <ModalHeader className="flex flex-col gap-1">
-          <h2 className="text-xl font-bold">Switch to Business Account</h2>
-          <p className="text-sm text-gray-600">
+          <h2 className="text-xl font-bold text-foreground">Switch to Business Account</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Upgrade your account to start selling artwork and access business features
           </p>
         </ModalHeader>
@@ -125,16 +125,16 @@ export const SwitchToArtistModal: React.FC<SwitchToArtistModalProps> = ({
             >
               <Radio value="ARTIST" className="w-full">
                 <div className="flex flex-col">
-                  <span className="font-medium">Individual Artist</span>
-                  <span className="text-sm text-gray-500">
+                  <span className="font-medium text-foreground">Individual Artist</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
                     Perfect for individual artists and creators
                   </span>
                 </div>
               </Radio>
               <Radio value="ORGANIZATION" className="w-full">
                 <div className="flex flex-col">
-                  <span className="font-medium">Organization/Gallery</span>
-                  <span className="text-sm text-gray-500">
+                  <span className="font-medium text-foreground">Organization/Gallery</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
                     For galleries, studios, and art organizations
                   </span>
                 </div>
@@ -142,8 +142,8 @@ export const SwitchToArtistModal: React.FC<SwitchToArtistModalProps> = ({
             </RadioGroup>
 
             {businessType === 'ORGANIZATION' && (
-              <div className="space-y-4 mt-6 p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium text-gray-900">Organization Details</h3>
+              <div className="space-y-4 mt-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <h3 className="font-medium text-gray-900 dark:text-gray-100">Organization Details</h3>
                 <Input
                   label="Organization Name"
                   placeholder="Enter your organization name"
@@ -151,6 +151,9 @@ export const SwitchToArtistModal: React.FC<SwitchToArtistModalProps> = ({
                   onValueChange={setOrganizationName}
                   isRequired
                   variant="bordered"
+                  classNames={{
+                    input: "outline-none",
+                  }}
                 />
                 <Textarea
                   label="Description (Optional)"
@@ -159,13 +162,16 @@ export const SwitchToArtistModal: React.FC<SwitchToArtistModalProps> = ({
                   onValueChange={setOrganizationDescription}
                   variant="bordered"
                   minRows={3}
+                  classNames={{
+                    input: "outline-none",
+                  }}
                 />
               </div>
             )}
 
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-medium text-blue-900 mb-2">Business Features Include:</h4>
-              <ul className="text-sm text-blue-800 space-y-1">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+              <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">Business Features Include:</h4>
+              <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
                 <li>• Upload and sell your artwork</li>
                 <li>• Create and manage galleries</li>
                 <li>• Access to business dashboard</li>
