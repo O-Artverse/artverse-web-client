@@ -76,7 +76,7 @@ export default function EditArtworkPage() {
         categoryId: artwork.categoryId,
         medium: artwork.medium || '',
         dimensions: artwork.dimensions || '',
-        year: artwork.year,
+        year: artwork.year || 0,
         price: artwork.price ? String(artwork.price) : '',
         tags: artwork.tags || [],
         status: artwork.status as 'DRAFT' | 'PUBLISHED',
