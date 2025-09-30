@@ -1,0 +1,10 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+Disallow: /business/
+Disallow: /settings/
+Disallow: /sign-in
+Disallow: /sign-up
+
+# Sitemap
+Sitemap: https://artverse.vercel.app/sitemap.xml
