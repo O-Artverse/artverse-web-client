@@ -8,7 +8,7 @@ export interface SearchSuggestion {
 }
 
 export interface ArtistSuggestion {
-  id: number;
+  id: string | number;
   name: string;
   tag: string;
   avatar?: string;
@@ -16,7 +16,7 @@ export interface ArtistSuggestion {
 }
 
 export interface CategorySuggestion {
-  id: number;
+  id: string | number;
   title: string;
   image: string;
 }
@@ -41,6 +41,8 @@ interface SearchContextType {
   popularCategories: CategorySuggestion[];
   setPopularCategories: (categories: CategorySuggestion[]) => void;
   clearSearch: () => void;
+  addRecentSearch: (query: string) => void;
+  removeRecentSearch: (query: string) => void;
 }
 
 export const SearchContext = createContext<SearchContextType | undefined>(undefined);
@@ -49,11 +51,14 @@ interface SearchProviderProps {
   children: ReactNode;
 }
 
+const RECENT_SEARCHES_KEY = 'artverse_recent_searches';
+const MAX_RECENT_SEARCHES = 5;
+
 export function SearchProvider({ children }: SearchProviderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showRecentSearches, setShowRecentSearches] = useState(true);
-  
+
   const [searchSuggestions, setSearchSuggestions] = useState<SearchSuggestion[]>([]);
   const [artistSuggestions, setArtistSuggestions] = useState<ArtistSuggestion[]>([]);
   const [recentSearchTags, setRecentSearchTags] = useState<string[]>([]);
@@ -63,6 +68,23 @@ export function SearchProvider({ children }: SearchProviderProps) {
   const clearSearch = () => {
     setSearchQuery('');
     setShowRecentSearches(true);
+  };
+
+  const addRecentSearch = (query: string) => {
+    if (!query || query.trim().length < 2) return;
+
+    const trimmedQuery = query.trim();
+    const existing = recentSearchTags.filter(tag => tag !== trimmedQuery);
+    const updated = [trimmedQuery, ...existing].slice(0, MAX_RECENT_SEARCHES);
+
+    setRecentSearchTags(updated);
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+  };
+
+  const removeRecentSearch = (query: string) => {
+    const updated = recentSearchTags.filter(tag => tag !== query);
+    setRecentSearchTags(updated);
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
   };
 
   const contextValue: SearchContextType = {
@@ -85,6 +107,8 @@ export function SearchProvider({ children }: SearchProviderProps) {
     popularCategories,
     setPopularCategories,
     clearSearch,
+    addRecentSearch,
+    removeRecentSearch,
   };
 
   return (

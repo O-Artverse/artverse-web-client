@@ -11,6 +11,11 @@ export interface ChatMessage {
   id: string;
   roomId: string;
   senderId: string;
+  sender?: {
+    id: string;
+    name: string;
+    avatar?: string;
+  };
   content: string;
   type: 'text' | 'image' | 'artwork' | 'system';
   timestamp: string;
@@ -58,6 +63,8 @@ export interface ChatState {
   isConnected: boolean;
   isLoading: boolean;
   error: string | null;
+  showFavoriteArtworks: boolean;
+  selectedArtworks: string[];
 }
 
 export interface FavoriteArtwork {

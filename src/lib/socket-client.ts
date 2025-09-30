@@ -10,7 +10,7 @@ class SocketClient {
   private onQueue: QueuedListener[] = [];
   private offQueue: QueuedOff[] = [];
 
-  public connect(eventId: number, accessToken: string) {
+  public connect(eventId: number, accessToken: string, namespace: string = '') {
     if (this.socket && this.socket.connected) {
       return Promise.resolve(this.socket);
     }
@@ -21,31 +21,42 @@ class SocketClient {
 
     this.connectionPromise = new Promise((resolve, reject) => {
       const socketBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const url = namespace ? `${socketBaseUrl}${namespace}` : socketBaseUrl;
 
-      this.socket = io(socketBaseUrl, {
+      console.log('🔌 Connecting to:', url);
+      console.log('🔑 Token length:', accessToken?.length || 0);
+
+      this.socket = io(url, {
         reconnection: true,
         reconnectionDelay: 1000,
+        reconnectionAttempts: 5,
+        reconnectionDelayMax: 5000,
+        transports: ['websocket', 'polling'], // Try websocket first
         query: {
           eventId: eventId,
         },
         auth: {
           token: `Bearer ${accessToken}`,
         },
+        extraHeaders: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       });
 
       this.socket.on('connect', () => {
-        console.log('Socket connected');
+        console.log('✅ Socket connected to:', url);
         this.flushQueues();
         resolve(this.socket as Socket);
       });
 
       this.socket.on('connect_error', (error) => {
-        console.error('Socket connection error:', error);
+        console.error('❌ Socket connection error:', error.message);
+        console.error('Full error:', error);
         reject(error);
       });
 
       this.socket.on('disconnect', (reason) => {
-        console.log('Socket disconnected:', reason);
+        console.log('🔌 Socket disconnected:', reason);
       });
     });
 

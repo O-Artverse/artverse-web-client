@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState } from 'react';
-import { mockRecommendedUsers, useChat } from '@/contexts/ChatContext';
+import React, { useState, useEffect } from 'react';
+import { useChat } from '@/contexts/ChatContext';
 import { ChatRoom, ChatUser } from '@/types/chat';
 import { MagnifyingGlass, PencilSimpleLineIcon, SealCheckIcon, XIcon } from '@phosphor-icons/react';
 import Image from 'next/image';
@@ -36,7 +36,7 @@ export const renderAvatar = (user: ChatUser, size: 'sm' | 'md' = 'md') => {
 
   return (
     <div className={`${sizeClasses} bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0`}>
-      {user.name.charAt(0)}
+      {user.name?.charAt(0) || '?'}
     </div>
   );
 };
@@ -87,12 +87,22 @@ const getTimeAgo = (timestamp: string) => {
 };
 
 export default function ChatList({ onSelectRoom }: ChatListProps) {
-  const { rooms, searchUsers, createRoom } = useChat();
+  const { rooms, searchUsers, createRoom, getRecommendedUsers } = useChat();
   const [newChatQuery, setNewChatQuery] = useState('');
   const [searchResults, setSearchResults] = useState<ChatUser[]>([]);
+  const [recommendedUsers, setRecommendedUsers] = useState<ChatUser[]>([]);
   const [showNewChat, setShowNewChat] = useState(false);
   const { theme } = useTheme();
   const darkMode = theme === 'dark';
+
+  // Load recommended users on mount
+  useEffect(() => {
+    const loadRecommended = async () => {
+      const users = await getRecommendedUsers();
+      setRecommendedUsers(users);
+    };
+    loadRecommended();
+  }, [getRecommendedUsers]);
   const handleSearch = async (query: string) => {
     if (query.trim()) {
       const results = await searchUsers(query);
@@ -110,7 +120,7 @@ export default function ChatList({ onSelectRoom }: ChatListProps) {
   };
 
   return (
-    <div className="flex flex-col h-full dark:bg-black/90 bg-white/90 backdrop-blur-sm rounded-xl p-4 overflow-y-auto">
+    <div className="flex flex-col h-full dark:bg-[#1E1B26]/90 bg-white/90 backdrop-blur-sm rounded-xl p-4 overflow-y-auto">
       {/* Header */}
       <div className="mb-4">
         {showNewChat ?
@@ -261,11 +271,11 @@ export default function ChatList({ onSelectRoom }: ChatListProps) {
             </div>
           )
         )}
-        {searchResults.length === 0 && (
+        {searchResults.length === 0 && recommendedUsers.length > 0 && (
           <div className="mb-4">
             <h3 className="text-[14px] font-regular dark:text-white text-black mt-[11px] mb-[11px]">Recommended</h3>
             <div className="space-y-2">
-              {mockRecommendedUsers.map((user) => (
+              {recommendedUsers.map((user) => (
                 <div
                   key={user.id}
                   className="flex items-center justify-between p-3 hover:bg-white dark:hover:bg-black rounded-lg cursor-pointer transition-colors"

@@ -23,6 +23,8 @@ export const SearchInput = () => {
     recentSearchTags,
     recommendedCategories,
     popularCategories,
+    addRecentSearch,
+    removeRecentSearch,
   } = useSearch();
 
   useEffect(() => {
@@ -71,7 +73,8 @@ export const SearchInput = () => {
             <div>
               <div className='p-[11px] gap-[11px] flex flex-col'>
                 {searchSuggestions.map((suggestion) => {
-                  const text = suggestion.text;
+                  const text = suggestion.text || '';
+                  if (!text) return null;
                   const searchLower = searchQuery.toLowerCase();
                   const textLower = text.toLowerCase();
                   const matchIndex = textLower.indexOf(searchLower);
@@ -85,7 +88,10 @@ export const SearchInput = () => {
                       <button
                         key={suggestion.id}
                         className='flex items-center w-full text-left px-[11px] py-[11px] hover:bg-gray-200 dark:hover:bg-black rounded-md dark:text-white transition-all'
-                        onClick={() => setSearchQuery(suggestion.text)}
+                        onClick={() => {
+                          setSearchQuery(suggestion.text)
+                          addRecentSearch(suggestion.text)
+                        }}
                       >
                         <MagnifyingGlassIcon className='mr-[11px] text-black dark:text-white' size={16} />
                         <div className="flex-1 text-black dark:text-white">
@@ -101,7 +107,10 @@ export const SearchInput = () => {
                     <button
                       key={suggestion.id}
                       className='flex items-center w-full text-left px-[11px] py-[11px] hover:bg-gray-200 dark:hover:bg-black rounded-md dark:text-white'
-                      onClick={() => setSearchQuery(suggestion.text)}
+                      onClick={() => {
+                        setSearchQuery(suggestion.text)
+                        addRecentSearch(suggestion.text)
+                      }}
                     >
                       <MagnifyingGlassIcon className='mr-[11px] text-black dark:text-white' size={16} />
                       <div className="flex-1 text-black dark:text-white">{text}</div>
@@ -153,13 +162,26 @@ export const SearchInput = () => {
                   <h3 className='text-sm font-medium mb-[11px] dark:text-white'>Recent search</h3>
                   <div className='flex flex-wrap gap-[11px]'>
                     {recentSearchTags.map((tag, index) => (
-                      <button
-                        key={index}
-                        className='px-[11px] py-[6px] bg-gray-100 dark:bg-[#121212] dark:text-gray-200 rounded-md text-sm hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center'
-                      >
-                        {tag}
-                        <DeleteIcon className='dark:text-white text-black ml-[11px]' />
-                      </button>
+                      <div key={index} className='relative group'>
+                        <button
+                          className='px-[11px] py-[6px] bg-gray-100 dark:bg-[#121212] dark:text-gray-200 rounded-md text-sm hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center'
+                          onClick={() => {
+                            setSearchQuery(tag)
+                            addRecentSearch(tag)
+                          }}
+                        >
+                          {tag}
+                        </button>
+                        <button
+                          className='absolute -top-1 -right-1 bg-gray-400 dark:bg-gray-600 rounded-full p-0.5 hover:bg-red-500 dark:hover:bg-red-500 opacity-0 group-hover:opacity-100 transition-opacity'
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            removeRecentSearch(tag)
+                          }}
+                        >
+                          <DeleteIcon className='text-white w-3 h-3' />
+                        </button>
+                      </div>
                     ))}
                   </div>
                 </div>}

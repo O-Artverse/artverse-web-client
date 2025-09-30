@@ -20,6 +20,15 @@ const config: Config = {
         background: "rgb(var(--background-start-rgb))",
         foreground: "rgb(var(--foreground-rgb))",
       },
+      keyframes: {
+        'fade-in': {
+          '0%': { opacity: '0', transform: 'translate(-50%, -45%)' },
+          '100%': { opacity: '1', transform: 'translate(-50%, -50%)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fade-in 0.3s ease-out',
+      },
     },
   },
   darkMode: "class",

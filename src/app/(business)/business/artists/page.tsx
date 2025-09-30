@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Card,
   CardBody,
@@ -17,7 +17,8 @@ import {
   ModalBody,
   ModalFooter,
   useDisclosure,
-  Textarea
+  Textarea,
+  Spinner,
 } from '@heroui/react';
 import {
   MagnifyingGlass,
@@ -27,8 +28,13 @@ import {
   PaperPlaneRight,
   Crown,
   UserGear,
-  Trash
+  Trash,
 } from '@phosphor-icons/react';
+import { useMyOrganizations, useOrganizationMembers } from '@/hooks/queries/organization.query';
+import { useInviteMember, useRemoveMember } from '@/hooks/mutations/organization.mutation';
+import { toast } from 'react-hot-toast';
+import PendingInvitationsCard from '@/components/modules/Invitations/PendingInvitationsCard';
+import PendingJoinRequestsCard from '@/components/modules/JoinRequests/PendingJoinRequestsCard';
 
 export default function ArtistsPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -39,88 +45,105 @@ export default function ArtistsPage() {
   const {isOpen: isRemoveOpen, onOpen: onRemoveOpen, onClose: onRemoveClose} = useDisclosure();
   const [selectedArtist, setSelectedArtist] = useState<any>(null);
 
-  // Mock organization members data
-  const orgMembers = [
-    {
-      id: 1,
-      firstName: "Sarah",
-      lastName: "Johnson",
-      username: "sarah_art",
-      email: "sarah@example.com",
-      role: "ADMIN",
-      joinedAt: "2024-01-15",
-      artworkCount: 24,
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100",
-      specialties: ["Digital Art", "Portraits"]
-    },
-    {
-      id: 2,
-      firstName: "Michael",
-      lastName: "Chen",
-      username: "mchen_creative",
-      email: "michael@example.com",
-      role: "ARTIST",
-      joinedAt: "2024-02-20",
-      artworkCount: 18,
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100",
-      specialties: ["Photography", "Street Art"]
-    },
-    {
-      id: 3,
-      firstName: "Emma",
-      lastName: "Rodriguez",
-      username: "emma_painter",
-      email: "emma@example.com",
-      role: "ARTIST",
-      joinedAt: "2024-03-10",
-      artworkCount: 31,
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100",
-      specialties: ["Abstract", "Oil Painting"]
-    },
-    {
-      id: 4,
-      firstName: "David",
-      lastName: "Kim",
-      username: "dkim_sculptor",
-      email: "david@example.com",
-      role: "ARTIST",
-      joinedAt: "2024-04-05",
-      artworkCount: 12,
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100",
-      specialties: ["Sculpture", "Mixed Media"]
+  // Fetch user's organizations
+  const { data: myOrgs, isLoading: isLoadingOrgs } = useMyOrganizations();
+
+  // Get first organization (assuming user manages one organization for now)
+  const currentOrg = myOrgs?.[0];
+  const organizationId = currentOrg?.id;
+
+  // Fetch organization members
+  const {
+    data: members,
+    isLoading: isLoadingMembers,
+    error: membersError
+  } = useOrganizationMembers(
+    organizationId || '',
+    undefined
+  );
+
+  // Mutations
+  const inviteMutation = useInviteMember();
+  const removeMutation = useRemoveMember();
+
+  // Filter members
+  const filteredMembers = useMemo(() => {
+    if (!members) return [];
+
+    return members.filter(member => {
+      const user = member.user;
+      const matchesSearch =
+        user.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.username?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesRole = roleFilter === 'all' || member.role.toLowerCase() === roleFilter;
+      return matchesSearch && matchesRole;
+    });
+  }, [members, searchQuery, roleFilter]);
+
+  // Stats
+  const stats = useMemo(() => {
+    if (!members) return { total: 0, admins: 0, artists: 0, totalArtworks: 0 };
+
+    return {
+      total: members.length,
+      admins: members.filter(m => m.role === 'ADMIN').length,
+      artists: members.filter(m => m.role === 'ARTIST').length,
+      totalArtworks: members.reduce((sum, m) => sum + (m.user.artworkCount || 0), 0),
+    };
+  }, [members]);
+
+  const handleInviteArtist = async () => {
+    if (!organizationId) {
+      toast.error('No organization found');
+      return;
     }
-  ];
 
-  const filteredMembers = orgMembers.filter(member => {
-    const matchesSearch =
-      member.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.username.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = roleFilter === 'all' || member.role.toLowerCase() === roleFilter;
-    return matchesSearch && matchesRole;
-  });
+    try {
+      await inviteMutation.mutateAsync({
+        organizationId,
+        data: {
+          email: inviteEmail,
+          message: inviteMessage || undefined,
+        },
+      });
 
-  const handleInviteArtist = () => {
-    console.log('Inviting artist:', { email: inviteEmail, message: inviteMessage });
-    setInviteEmail('');
-    setInviteMessage('');
-    onInviteClose();
+      toast.success('Artist invited successfully!');
+      setInviteEmail('');
+      setInviteMessage('');
+      onInviteClose();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to invite artist');
+    }
   };
 
-  const handleRemoveArtist = (artist: any) => {
-    setSelectedArtist(artist);
+  const handleRemoveArtist = (member: any) => {
+    setSelectedArtist(member);
     onRemoveOpen();
   };
 
-  const confirmRemove = () => {
-    console.log('Removing artist:', selectedArtist?.id);
-    onRemoveClose();
+  const confirmRemove = async () => {
+    if (!organizationId || !selectedArtist) return;
+
+    try {
+      await removeMutation.mutateAsync({
+        organizationId,
+        userId: selectedArtist.user.id,
+      });
+
+      toast.success('Artist removed successfully');
+      onRemoveClose();
+      setSelectedArtist(null);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to remove artist');
+    }
   };
 
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'ADMIN': return 'secondary';
       case 'ARTIST': return 'primary';
+      case 'OWNER': return 'warning';
       default: return 'default';
     }
   };
@@ -129,9 +152,35 @@ export default function ArtistsPage() {
     switch (role) {
       case 'ADMIN': return <Crown size={14} />;
       case 'ARTIST': return <UserGear size={14} />;
+      case 'OWNER': return <Crown size={14} weight="fill" />;
       default: return null;
     }
   };
+
+  // Loading state
+  if (isLoadingOrgs || isLoadingMembers) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  // No organization state
+  if (!currentOrg) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardBody className="text-center py-12">
+            <h2 className="text-xl font-semibold mb-2">No Organization Found</h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              You need to create or join an organization to manage artists.
+            </p>
+          </CardBody>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -142,13 +191,14 @@ export default function ArtistsPage() {
             Artists Management
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Manage artists in your organization
+            Manage artists in {currentOrg.name}
           </p>
         </div>
         <Button
           color="primary"
           startContent={<Plus size={16} />}
           onPress={onInviteOpen}
+          isDisabled={currentOrg.memberRole === 'ARTIST'}
         >
           Invite Artist
         </Button>
@@ -177,12 +227,22 @@ export default function ArtistsPage() {
         </CardBody>
       </Card>
 
+      {/* Pending Invitations */}
+      {organizationId && currentOrg.memberRole !== 'ARTIST' && (
+        <PendingInvitationsCard organizationId={organizationId} />
+      )}
+
+      {/* Pending Join Requests */}
+      {organizationId && currentOrg.memberRole !== 'ARTIST' && (
+        <PendingJoinRequestsCard organizationId={organizationId} />
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardBody className="text-center p-4">
             <div className="text-2xl font-bold text-blue-600">
-              {orgMembers.length}
+              {stats.total}
             </div>
             <div className="text-sm text-gray-600">Total Members</div>
           </CardBody>
@@ -190,7 +250,7 @@ export default function ArtistsPage() {
         <Card>
           <CardBody className="text-center p-4">
             <div className="text-2xl font-bold text-purple-600">
-              {orgMembers.filter(m => m.role === 'ADMIN').length}
+              {stats.admins}
             </div>
             <div className="text-sm text-gray-600">Admins</div>
           </CardBody>
@@ -198,7 +258,7 @@ export default function ArtistsPage() {
         <Card>
           <CardBody className="text-center p-4">
             <div className="text-2xl font-bold text-green-600">
-              {orgMembers.filter(m => m.role === 'ARTIST').length}
+              {stats.artists}
             </div>
             <div className="text-sm text-gray-600">Artists</div>
           </CardBody>
@@ -206,7 +266,7 @@ export default function ArtistsPage() {
         <Card>
           <CardBody className="text-center p-4">
             <div className="text-2xl font-bold text-orange-600">
-              {orgMembers.reduce((sum, m) => sum + m.artworkCount, 0)}
+              {stats.totalArtworks}
             </div>
             <div className="text-sm text-gray-600">Total Artworks</div>
           </CardBody>
@@ -219,93 +279,99 @@ export default function ArtistsPage() {
           <h3 className="text-lg font-semibold">Organization Members</h3>
         </CardHeader>
         <CardBody>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredMembers.map((member) => (
-              <Card key={member.id} className="border">
-                <CardBody className="p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <Avatar
-                        src={member.avatar}
-                        name={`${member.firstName} ${member.lastName}`}
-                        size="md"
-                      />
-                      <div>
-                        <h4 className="font-semibold text-gray-900 dark:text-white">
-                          {member.firstName} {member.lastName}
-                        </h4>
-                        <p className="text-sm text-gray-600">@{member.username}</p>
+          {isLoadingMembers ? (
+            <div className="flex justify-center py-8">
+              <Spinner />
+            </div>
+          ) : membersError ? (
+            <div className="text-center py-8 text-red-500">
+              Error loading members. Please try again.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredMembers.map((member) => (
+                <Card key={member.id} className="border">
+                  <CardBody className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar
+                          src={member.user.avatar}
+                          name={`${member.user.firstName} ${member.user.lastName}`}
+                          size="md"
+                        />
+                        <div>
+                          <h4 className="font-semibold text-gray-900 dark:text-white">
+                            {member.user.firstName} {member.user.lastName}
+                          </h4>
+                          <p className="text-sm text-gray-600">@{member.user.username}</p>
+                        </div>
+                      </div>
+                      <Button
+                        isIconOnly
+                        size="sm"
+                        variant="light"
+                      >
+                        <DotsThree size={16} />
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center gap-2 mb-3">
+                      <Chip
+                        size="sm"
+                        color={getRoleColor(member.role)}
+                        variant="flat"
+                        startContent={getRoleIcon(member.role)}
+                      >
+                        {member.role}
+                      </Chip>
+                    </div>
+
+                    <div className="space-y-2 mb-4">
+                      <div className="text-sm text-gray-600">
+                        <strong>{member.user.artworkCount || 0}</strong> artworks
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Joined {new Date(member.joinedAt).toLocaleDateString()}
                       </div>
                     </div>
-                    <Button
-                      isIconOnly
-                      size="sm"
-                      variant="light"
-                    >
-                      <DotsThree size={16} />
-                    </Button>
-                  </div>
 
-                  <div className="flex items-center gap-2 mb-3">
-                    <Chip
-                      size="sm"
-                      color={getRoleColor(member.role)}
-                      variant="flat"
-                      startContent={getRoleIcon(member.role)}
-                    >
-                      {member.role}
-                    </Chip>
-                  </div>
+                    {member.user.description && (
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-600 line-clamp-2">
+                          {member.user.description}
+                        </p>
+                      </div>
+                    )}
 
-                  <div className="space-y-2 mb-4">
-                    <div className="text-sm text-gray-600">
-                      <strong>{member.artworkCount}</strong> artworks
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      Joined {new Date(member.joinedAt).toLocaleDateString()}
-                    </div>
-                  </div>
-
-                  <div className="mb-4">
-                    <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Specialties:
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {member.specialties.map((specialty) => (
-                        <Chip key={specialty} size="sm" variant="flat" color="default">
-                          {specialty}
-                        </Chip>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="flat"
-                      startContent={<Eye size={14} />}
-                      className="flex-1"
-                    >
-                      View Profile
-                    </Button>
-                    {member.role !== 'ADMIN' && (
+                    <div className="flex gap-2">
                       <Button
                         size="sm"
-                        color="danger"
-                        variant="light"
-                        startContent={<Trash size={14} />}
-                        onPress={() => handleRemoveArtist(member)}
+                        variant="flat"
+                        startContent={<Eye size={14} />}
+                        className="flex-1"
                       >
-                        Remove
+                        View Profile
                       </Button>
-                    )}
-                  </div>
-                </CardBody>
-              </Card>
-            ))}
-          </div>
+                      {member.role !== 'OWNER' && currentOrg.memberRole !== 'ARTIST' && (
+                        <Button
+                          size="sm"
+                          color="danger"
+                          variant="light"
+                          startContent={<Trash size={14} />}
+                          onPress={() => handleRemoveArtist(member)}
+                          isLoading={removeMutation.isPending}
+                        >
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  </CardBody>
+                </Card>
+              ))}
+            </div>
+          )}
 
-          {filteredMembers.length === 0 && (
+          {filteredMembers.length === 0 && !isLoadingMembers && (
             <div className="text-center py-8">
               <MagnifyingGlass size={48} className="mx-auto text-gray-400 mb-4" />
               <p className="text-gray-600 dark:text-gray-400">
@@ -351,6 +417,7 @@ export default function ArtistsPage() {
               startContent={<PaperPlaneRight size={16} />}
               onPress={handleInviteArtist}
               isDisabled={!inviteEmail.trim()}
+              isLoading={inviteMutation.isPending}
             >
               Send Invitation
             </Button>
@@ -364,7 +431,7 @@ export default function ArtistsPage() {
           <ModalHeader>Remove Artist</ModalHeader>
           <ModalBody>
             <p>
-              Are you sure you want to remove <strong>{selectedArtist?.firstName} {selectedArtist?.lastName}</strong> from the organization?
+              Are you sure you want to remove <strong>{selectedArtist?.user?.firstName} {selectedArtist?.user?.lastName}</strong> from the organization?
               This action cannot be undone and they will lose access to organization resources.
             </p>
           </ModalBody>
@@ -372,7 +439,11 @@ export default function ArtistsPage() {
             <Button variant="light" onPress={onRemoveClose}>
               Cancel
             </Button>
-            <Button color="danger" onPress={confirmRemove}>
+            <Button
+              color="danger"
+              onPress={confirmRemove}
+              isLoading={removeMutation.isPending}
+            >
               Remove Artist
             </Button>
           </ModalFooter>

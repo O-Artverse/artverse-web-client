@@ -17,16 +17,20 @@ export function useSendMessage() {
   
   return useMutation({
     mutationFn: ({ 
-      roomId, 
-      content, 
-      type, 
-      artwork 
-    }: { 
-      roomId: string; 
-      content: string; 
-      type?: 'text' | 'image' | 'artwork'; 
-      artwork?: any; 
-    }) => ChatService.sendMessage(roomId, content, type, artwork),
+      roomId,
+      content,
+      type,
+      artworkId
+    }: {
+      roomId: string;
+      content: string;
+      type?: 'text' | 'image' | 'artwork';
+      artworkId?: string;
+    }) => ChatService.sendMessage(roomId, {
+      content,
+      type: (type?.toUpperCase() || 'TEXT') as 'TEXT' | 'IMAGE' | 'ARTWORK' | 'SYSTEM',
+      artworkId
+    }),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ 
         queryKey: [queryKeys.CHAT_MESSAGES, variables.roomId] 

@@ -13,9 +13,10 @@ export function useChatRooms() {
 
 export function useCreateRoom() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: (participants: ChatUser[]) => ChatService.createRoom(participants),
+    mutationFn: (data: { name?: string; type: 'DIRECT' | 'GROUP' | 'EXHIBITION'; participantIds: string[] }) =>
+      ChatService.createRoom(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [queryKeys.CHAT_ROOMS] });
     },
@@ -33,25 +34,29 @@ export function useChatMessages(roomId: string) {
 
 export function useSendMessage() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: ({ 
-      roomId, 
-      content, 
-      type, 
-      artwork 
-    }: { 
-      roomId: string; 
-      content: string; 
-      type?: 'text' | 'image' | 'artwork'; 
-      artwork?: any; 
-    }) => ChatService.sendMessage(roomId, content, type, artwork),
+    mutationFn: ({
+      roomId,
+      content,
+      type,
+      artworkId
+    }: {
+      roomId: string;
+      content: string;
+      type?: 'text' | 'image' | 'artwork';
+      artworkId?: string;
+    }) => ChatService.sendMessage(roomId, {
+      content,
+      type: (type?.toUpperCase() || 'TEXT') as 'TEXT' | 'IMAGE' | 'ARTWORK' | 'SYSTEM',
+      artworkId
+    }),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ 
-        queryKey: [queryKeys.CHAT_MESSAGES, variables.roomId] 
+      queryClient.invalidateQueries({
+        queryKey: [queryKeys.CHAT_MESSAGES, variables.roomId]
       });
-      queryClient.invalidateQueries({ 
-        queryKey: [queryKeys.CHAT_ROOMS] 
+      queryClient.invalidateQueries({
+        queryKey: [queryKeys.CHAT_ROOMS]
       });
     },
   });
@@ -74,24 +79,25 @@ export function useFavoriteArtworks() {
   });
 }
 
-export function useAddToFavorites() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: (artworkId: string) => ChatService.addToFavorites(artworkId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKeys.FAVORITE_ARTWORKS] });
-    },
-  });
-}
+// TODO: Implement these methods in ChatService
+// export function useAddToFavorites() {
+//   const queryClient = useQueryClient();
+//
+//   return useMutation({
+//     mutationFn: (artworkId: string) => ChatService.addToFavorites(artworkId),
+//     onSuccess: () => {
+//       queryClient.invalidateQueries({ queryKey: [queryKeys.FAVORITE_ARTWORKS] });
+//     },
+//   });
+// }
 
-export function useRemoveFromFavorites() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: (artworkId: string) => ChatService.removeFromFavorites(artworkId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKeys.FAVORITE_ARTWORKS] });
-    },
-  });
-}
+// export function useRemoveFromFavorites() {
+//   const queryClient = useQueryClient();
+//
+//   return useMutation({
+//     mutationFn: (artworkId: string) => ChatService.removeFromFavorites(artworkId),
+//     onSuccess: () => {
+//       queryClient.invalidateQueries({ queryKey: [queryKeys.FAVORITE_ARTWORKS] });
+//     },
+//   });
+// }

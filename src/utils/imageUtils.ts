@@ -27,3 +27,21 @@ export const getImageUrl = (imagePath: string | null | undefined): string | null
 export const getUserAvatarUrl = (avatarPath: string | null | undefined): string | null => {
   return getImageUrl(avatarPath);
 };
+
+/**
+ * Get artwork image URL
+ * @param imagePath - Image path from artwork object
+ * @returns Full image URL or null
+ */
+export const getArtworkImageUrl = (imagePath: string | null | undefined): string | null => {
+  return getImageUrl(imagePath);
+};
+
+/**
+ * Get event banner URL
+ * @param bannerPath - Banner path from event object
+ * @returns Full banner URL or null
+ */
+export const getEventBannerUrl = (bannerPath: string | null | undefined): string | null => {
+  return getImageUrl(bannerPath);
+};

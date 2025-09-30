@@ -11,24 +11,25 @@ export function useFavoriteArtworks() {
   });
 }
 
-export function useAddToFavorites() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: (artworkId: string) => ChatService.addToFavorites(artworkId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKeys.FAVORITE_ARTWORKS] });
-    },
-  });
-}
+// TODO: Implement these methods in ChatService
+// export function useAddToFavorites() {
+//   const queryClient = useQueryClient();
+//
+//   return useMutation({
+//     mutationFn: (artworkId: string) => ChatService.addToFavorites(artworkId),
+//     onSuccess: () => {
+//       queryClient.invalidateQueries({ queryKey: [queryKeys.FAVORITE_ARTWORKS] });
+//     },
+//   });
+// }
 
-export function useRemoveFromFavorites() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: (artworkId: string) => ChatService.removeFromFavorites(artworkId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [queryKeys.FAVORITE_ARTWORKS] });
-    },
-  });
-} 
+// export function useRemoveFromFavorites() {
+//   const queryClient = useQueryClient();
+//
+//   return useMutation({
+//     mutationFn: (artworkId: string) => ChatService.removeFromFavorites(artworkId),
+//     onSuccess: () => {
+//       queryClient.invalidateQueries({ queryKey: [queryKeys.FAVORITE_ARTWORKS] });
+//     },
+//   });
+// } 

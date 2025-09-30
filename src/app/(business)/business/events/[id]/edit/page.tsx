@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Card,
@@ -13,8 +13,9 @@ import {
   SelectItem,
   Switch,
   DatePicker,
-  DateValue
+  Spinner,
 } from '@heroui/react';
+import { parseDate } from '@internationalized/date';
 import {
   ArrowLeft,
   Upload,
@@ -24,23 +25,26 @@ import {
 } from '@phosphor-icons/react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useCreateEvent } from '@/hooks/queries/useEvents';
+import { useEvent, useUpdateEvent } from '@/hooks/queries/useEvents';
 import { useAppSelector } from '@/store/hooks';
 import { RootState } from '@/store';
 import { toast } from 'react-hot-toast';
+import eventService from '@/services/event.service';
 
-export default function CreateEventPage() {
+export default function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const { user } = useAppSelector((state: RootState) => state.auth);
-  const createEventMutation = useCreateEvent();
+  const { data: event, isLoading: isLoadingEvent } = useEvent(id);
+  const updateEventMutation = useUpdateEvent();
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     type: 'EXHIBITION',
     format: 'OFFLINE',
-    startDate: null as DateValue | null,
-    endDate: null as DateValue | null,
+    startDate: null as any,
+    endDate: null as any,
     location: '',
     address: '',
     onlineLink: '',
@@ -52,6 +56,34 @@ export default function CreateEventPage() {
   });
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerUrl, setBannerUrl] = useState('');
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+
+  // Load event data when available
+  useEffect(() => {
+    if (event) {
+      const startDate = new Date(event.startDate);
+      const endDate = new Date(event.endDate);
+
+      setFormData({
+        title: event.title,
+        description: event.description || '',
+        type: event.type,
+        format: event.format,
+        startDate: parseDate(startDate.toISOString().split('T')[0]),
+        endDate: parseDate(endDate.toISOString().split('T')[0]),
+        location: event.location || '',
+        address: event.address || '',
+        onlineLink: event.onlineLink || '',
+        maxAttendees: event.maxAttendees || 100,
+        ticketPrice: event.ticketPrice ? Number(event.ticketPrice) : 0,
+        hasTickets: !!event.ticketPrice && event.ticketPrice > 0,
+        tags: event.tags || [],
+        status: event.status
+      });
+
+      setBannerUrl(event.bannerImage || '');
+    }
+  }, [event]);
 
   const eventTypes = [
     { key: 'EXHIBITION', label: 'Art Exhibition' },
@@ -67,6 +99,14 @@ export default function CreateEventPage() {
     { key: 'ONLINE', label: 'Online Event' },
     { key: 'THREE_D_VIRTUAL', label: '3D Virtual Gallery' },
     { key: 'HYBRID', label: 'Hybrid Event' }
+  ];
+
+  const eventStatuses = [
+    { key: 'DRAFT', label: 'Draft' },
+    { key: 'UPCOMING', label: 'Upcoming' },
+    { key: 'ACTIVE', label: 'Active' },
+    { key: 'COMPLETED', label: 'Completed' },
+    { key: 'CANCELLED', label: 'Cancelled' }
   ];
 
   const handleInputChange = (field: string, value: any) => {
@@ -86,8 +126,7 @@ export default function CreateEventPage() {
           let width = img.width;
           let height = img.height;
 
-          // Calculate new dimensions to keep under maxSizeMB
-          const maxDimension = 2000; // Max width or height
+          const maxDimension = 2000;
           if (width > height && width > maxDimension) {
             height = (height * maxDimension) / width;
             width = maxDimension;
@@ -102,7 +141,6 @@ export default function CreateEventPage() {
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
 
-          // Start with high quality and reduce if needed
           let quality = 0.9;
           const compress = () => {
             canvas.toBlob(
@@ -137,11 +175,12 @@ export default function CreateEventPage() {
     });
   };
 
-  const handleBannerUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
+      setIsUploadingBanner(true);
+
       try {
-        // Step 1: Compress image
         toast.loading('Compressing image...', { id: 'upload-banner' });
         const originalSize = (file.size / (1024 * 1024)).toFixed(2);
         const compressedFile = await compressImage(file, 5);
@@ -150,28 +189,24 @@ export default function CreateEventPage() {
         setBannerFile(compressedFile);
 
         toast.loading(`Uploading banner (${compressedSize}MB)...`, { id: 'upload-banner' });
-
-        // Step 2: Upload to backend
-        const { default: eventService } = await import('@/services/event.service');
         const response = await eventService.uploadBanner(compressedFile);
 
-        // Get full URL with API base
         const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
         const fullUrl = `${apiBaseUrl}${response.url}`;
         setBannerUrl(fullUrl);
-
         toast.success(`Banner uploaded! (${originalSize}MB → ${compressedSize}MB)`, { id: 'upload-banner' });
       } catch (error: any) {
         console.error('Error uploading banner:', error);
         toast.error('Failed to upload banner', { id: 'upload-banner' });
         setBannerFile(null);
+      } finally {
+        setIsUploadingBanner(false);
       }
     }
   };
 
-  const handleSubmit = async (isDraft = false) => {
+  const handleSubmit = async () => {
     try {
-      // Validate required fields
       if (!formData.title) {
         toast.error('Event title is required');
         return;
@@ -182,15 +217,6 @@ export default function CreateEventPage() {
         return;
       }
 
-      // Get user's organization
-      const organizationId = user?.ownedOrganizations?.[0]?.id;
-
-      if (!organizationId) {
-        toast.error('You need to create an organization first');
-        return;
-      }
-
-      // Convert dates to ISO string
       const startDate = new Date(
         formData.startDate.year,
         formData.startDate.month - 1,
@@ -203,13 +229,12 @@ export default function CreateEventPage() {
         formData.endDate.day
       ).toISOString();
 
-      // Prepare event data
       const eventData = {
         title: formData.title,
         description: formData.description || undefined,
         type: formData.type,
         format: formData.format,
-        status: isDraft ? 'DRAFT' : 'UPCOMING',
+        status: formData.status,
         startDate,
         endDate,
         location: formData.location || undefined,
@@ -219,19 +244,13 @@ export default function CreateEventPage() {
         maxAttendees: formData.maxAttendees || undefined,
         bannerImage: bannerUrl || undefined,
         tags: formData.tags,
-        organizationId
       };
 
-      console.log('Creating event with data:', eventData);
-
-      // Call API
-      await createEventMutation.mutateAsync(eventData);
-
-      // Redirect back to events page
-      router.push('/business/events');
+      await updateEventMutation.mutateAsync({ id, data: eventData });
+      router.push(`/business/events/${id}`);
     } catch (error: any) {
-      console.error('Error creating event:', error);
-      toast.error(error?.response?.data?.message || 'Failed to create event');
+      console.error('Error updating event:', error);
+      toast.error(error?.response?.data?.message || 'Failed to update event');
     }
   };
 
@@ -245,11 +264,45 @@ export default function CreateEventPage() {
     }
   };
 
+  if (isLoadingEvent) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (!event) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-500">Event not found</p>
+        <Link href="/business/events">
+          <Button color="primary" className="mt-4">Back to Events</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  // Check permissions
+  const isCreator = event && user && event.creator.id === user.id;
+  const isOrganizationOwner = event && user?.ownedOrganizations?.some(org => org.id === event.organization.id);
+
+  if (!isCreator && !isOrganizationOwner) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-500">You don't have permission to edit this event</p>
+        <Link href="/business/events">
+          <Button color="primary" className="mt-4">Back to Events</Button>
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/business/events">
+        <Link href={`/business/events/${id}`}>
           <Button
             isIconOnly
             variant="light"
@@ -260,10 +313,10 @@ export default function CreateEventPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Create New Event
+            Edit Event
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Organize exhibitions, workshops, and art events
+            Update event information
           </p>
         </div>
       </div>
@@ -283,6 +336,7 @@ export default function CreateEventPage() {
                 onChange={handleBannerUpload}
                 className="hidden"
                 id="banner-upload"
+                disabled={isUploadingBanner}
               />
               <label
                 htmlFor="banner-upload"
@@ -291,7 +345,7 @@ export default function CreateEventPage() {
                 <Upload size={32} className="text-gray-400 dark:text-gray-500" />
                 <div>
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Click to upload banner
+                    {isUploadingBanner ? 'Uploading...' : 'Click to upload banner'}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     PNG, JPG up to 10MB
@@ -301,12 +355,12 @@ export default function CreateEventPage() {
             </div>
 
             {/* Preview Banner */}
-            {bannerFile && (
+            {(bannerFile || bannerUrl) && (
               <div className="space-y-3">
                 <h4 className="font-medium text-sm text-gray-900 dark:text-white">Banner Preview:</h4>
                 <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                   <Image
-                    src={URL.createObjectURL(bannerFile)}
+                    src={bannerFile ? URL.createObjectURL(bannerFile) : bannerUrl}
                     alt="Event banner preview"
                     fill
                     className="object-cover"
@@ -341,7 +395,7 @@ export default function CreateEventPage() {
                 minRows={3}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Select
                   label="Event Type"
                   placeholder="Select event type"
@@ -369,6 +423,20 @@ export default function CreateEventPage() {
                     </SelectItem>
                   ))}
                 </Select>
+
+                <Select
+                  label="Status"
+                  placeholder="Select status"
+                  selectedKeys={[formData.status]}
+                  onSelectionChange={(keys) => handleInputChange('status', Array.from(keys)[0])}
+                  isRequired
+                >
+                  {eventStatuses.map(status => (
+                    <SelectItem key={status.key}>
+                      {status.label}
+                    </SelectItem>
+                  ))}
+                </Select>
               </div>
             </div>
 
@@ -378,13 +446,13 @@ export default function CreateEventPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <DatePicker
                   label="Start Date"
-                  value={formData.startDate as any}
+                  value={formData.startDate}
                   onChange={(date) => handleInputChange('startDate', date)}
                   isRequired
                 />
                 <DatePicker
                   label="End Date"
-                  value={formData.endDate as any}
+                  value={formData.endDate}
                   onChange={(date) => handleInputChange('endDate', date)}
                   isRequired
                 />
@@ -461,28 +529,21 @@ export default function CreateEventPage() {
 
             {/* Actions */}
             <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <Button
-                variant="light"
-                onPress={() => router.push('/business/events')}
-                className="text-gray-600 dark:text-gray-400"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="flat"
-                onPress={() => handleSubmit(true)}
-                isLoading={createEventMutation.isPending}
-                className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-              >
-                Save as Draft
-              </Button>
+              <Link href={`/business/events/${id}`}>
+                <Button
+                  variant="light"
+                  className="text-gray-600 dark:text-gray-400"
+                >
+                  Cancel
+                </Button>
+              </Link>
               <Button
                 color="primary"
-                onPress={() => handleSubmit(false)}
-                isLoading={createEventMutation.isPending}
+                onPress={handleSubmit}
+                isLoading={updateEventMutation.isPending}
                 isDisabled={!formData.title || !formData.type || !formData.startDate || !formData.endDate}
               >
-                Create Event
+                Save Changes
               </Button>
             </div>
           </CardBody>

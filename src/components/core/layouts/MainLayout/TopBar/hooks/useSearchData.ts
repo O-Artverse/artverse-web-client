@@ -2,9 +2,13 @@
 
 import { useSearch } from '@/providers/SearchProvider';
 import { useEffect } from 'react';
+import artworkService from '@/services/artwork.service';
+
+const RECENT_SEARCHES_KEY = 'artverse_recent_searches';
 
 export const useSearchData = () => {
   const {
+    searchQuery,
     setSearchSuggestions,
     setArtistSuggestions,
     setRecentSearchTags,
@@ -12,70 +16,93 @@ export const useSearchData = () => {
     setPopularCategories
   } = useSearch();
 
+  // Load initial data (categories and recent searches from localStorage)
   useEffect(() => {
-    const fetchSearchData = async () => {
+    const loadInitialData = async () => {
       try {
-        setSearchSuggestions([
-          { id: 1, text: 'Princess and prince' },
-          { id: 2, text: 'Princess and prince something more here' },
-          { id: 3, text: 'Princess and prince something more here lorem ipsum' },
-          { id: 4, text: 'Princess and prince on the forest' },
-          { id: 5, text: 'Princess and prince on river' },
-        ]);
+        // Load categories from backend
+        const categories = await artworkService.getCategories();
 
-        setArtistSuggestions([
-          {
-            id: 101,
-            name: 'Princess Anna',
-            tag: 'Artist',
-            avatar: '/images/artAnna.png',
-            isVerify: true,
-          },
-          {
-            id: 102,
-            name: 'Princess Anna',
-            tag: 'Artist',
-            avatar: '/images/artAnna.png',
-            isVerify: true,
-          },
-        ]);
+        // Filter out categories without thumbnails (no artworks)
+        const categoriesWithThumbnails = categories.filter(cat => cat.thumbnail);
 
-        setRecentSearchTags([
-          'Search Tag', 'Search Tag', 'Search Tag', 'Search Tag', 'Search Tag'
-        ]);
+        // Sort by artwork count for recommended (descending)
+        const sortedByCount = [...categoriesWithThumbnails].sort((a, b) =>
+          (b._count?.artworks || 0) - (a._count?.artworks || 0)
+        );
 
-        setRecommendedCategories([
-          { id: 1, title: 'Still life artwork', image: '/images/recommend/rcm-life.png' },
-          { id: 2, title: 'Classic', image: '/images/recommend/rcm-classic.png' },
-          { id: 3, title: 'City arts', image: '/images/recommend/rcm-classic.png' },
-          { id: 4, title: 'Strange', image: '/images/recommend/rcm-life.png' },
-          { id: 5, title: 'Space arts', image: '/images/recommend/rcm-life.png' },
-          { id: 6, title: 'Nature mom', image: '/images/recommend/rcm-life.png' },
-          { id: 7, title: 'Today trend', image: '/images/recommend/rcm-life.png' },
-          { id: 8, title: 'Robot artwork', image: '/images/recommend/rcm-life.png' },
-          { id: 9, title: 'Robot artwork', image: '/images/recommend/rcm-life.png' },
-          { id: 10, title: 'Robot artwork', image: '/images/recommend/rcm-life.png' },
-          { id: 11, title: 'Robot artwork', image: '/images/recommend/rcm-life.png' },
-          { id: 12, title: 'Robot artwork', image: '/images/recommend/rcm-life.png' },
-          { id: 13, title: 'Robot artwork', image: '/images/recommend/rcm-life.png' },
-        ]);
+        // Map to UI format (keep string IDs for proper routing, use real thumbnails)
+        const recommendedCategories = sortedByCount.slice(0, 13).map(cat => ({
+          id: cat.id,
+          title: cat.name,
+          image: cat.thumbnail || '/images/recommend/rcm-life.png',
+        }));
 
-        setPopularCategories([
-          { id: 1, title: 'Classic', image: '/images/recommend/rcm-life.png' },
-          { id: 2, title: 'City arts', image: '/images/recommend/rcm-life.png' },
-          { id: 3, title: 'Robot artwork', image: '/images/recommend/rcm-life.png' },
-          { id: 4, title: 'Strange', image: '/images/recommend/rcm-life.png' },
-          { id: 5, title: 'Space arts', image: '/images/recommend/rcm-life.png' },
-          { id: 6, title: 'Today trend', image: '/images/recommend/rcm-life.png' },
-          { id: 7, title: 'Still life artwork', image: '/images/recommend/rcm-life.png' },
-          { id: 8, title: 'Nature mom', image: '/images/recommend/rcm-life.png' },
-        ]);
+        const popularCategories = sortedByCount.slice(0, 8).map(cat => ({
+          id: cat.id,
+          title: cat.name,
+          image: cat.thumbnail || '/images/recommend/rcm-life.png',
+        }));
 
+        setRecommendedCategories(recommendedCategories);
+        setPopularCategories(popularCategories);
+
+        // Load recent searches from localStorage
+        const recentSearches = localStorage.getItem(RECENT_SEARCHES_KEY);
+        if (recentSearches) {
+          const parsed = JSON.parse(recentSearches);
+          setRecentSearchTags(parsed);
+        }
       } catch (error) {
-        console.error('Error fetching search data:', error);
+        console.error('Error loading initial search data:', error);
       }
     };
 
-    fetchSearchData();
-  }, [setSearchSuggestions, setArtistSuggestions, setRecentSearchTags, setRecommendedCategories, setPopularCategories]);
+    loadInitialData();
+  }, [setRecommendedCategories, setPopularCategories, setRecentSearchTags]);
+
+  // Fetch suggestions when user types
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (!searchQuery || searchQuery.trim().length < 2) {
+        setSearchSuggestions([]);
+        setArtistSuggestions([]);
+        return;
+      }
+
+      try {
+        // Fetch suggestions from backend
+        const [suggestions, searchResults] = await Promise.all([
+          artworkService.getSearchSuggestions({ q: searchQuery, limit: 5 }),
+          artworkService.search({ q: searchQuery, limit: 3 })
+        ]);
+
+        // Map suggestions to UI format (filter out empty titles)
+        const mappedSuggestions = suggestions
+          .filter(s => s.title && s.title.trim())
+          .map((s, idx) => ({
+            id: idx + 1,
+            text: s.title,
+          }));
+
+        // Map artists to UI format (keep string IDs for proper routing)
+        const mappedArtists = searchResults.artists.map((artist) => ({
+          id: artist.id,
+          name: `${artist.firstName} ${artist.lastName}`,
+          tag: 'Artist',
+          avatar: artist.avatar || '/images/default-avatar.png',
+          isVerify: true,
+        }));
+
+        setSearchSuggestions(mappedSuggestions);
+        setArtistSuggestions(mappedArtists);
+      } catch (error) {
+        console.error('Error fetching search suggestions:', error);
+      }
+    };
+
+    // Debounce search
+    const timeoutId = setTimeout(fetchSuggestions, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, setSearchSuggestions, setArtistSuggestions]);
 } 

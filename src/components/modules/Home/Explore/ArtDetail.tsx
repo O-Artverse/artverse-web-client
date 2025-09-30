@@ -20,8 +20,10 @@ import {
     ArrowUUpRight,
     Building,
 } from '@phosphor-icons/react'
-import type { Art, Comment } from '@/data/ArtData'
-import { getArt, getRelated, listComments, addComment } from '@/data/ArtData'
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
+import artworkService, { type Artwork, type ArtworkComment } from '@/services/artwork.service'
+import { useAppSelector } from '@/store/hooks'
+import { getArtworkImageUrl } from '@/utils/imageUtils'
 
 /* ---------------- helpers ---------------- */
 const fmt = (d: string) => new Date(d).toLocaleString()
@@ -58,41 +60,119 @@ function useTextHistory(initial = '') {
     return { value, setValue, undo, redo }
 }
 
-type CNode = Comment & { children: CNode[] }
-
-/** Convert flat comments -> tree (roots: newest first; children: old -> new) */
-function buildTree(list: Comment[]) {
-    const map = new Map<string, CNode>()
-    const roots: CNode[] = []
-    list.forEach((c) => map.set(c.id, { ...c, children: [] }))
-    map.forEach((n) => {
-        if (n.parentId && map.has(n.parentId)) map.get(n.parentId)!.children.push(n)
-        else roots.push(n)
-    })
-    const asc = (a: Comment, b: Comment) =>
-        +new Date(a.createdAt) - +new Date(b.createdAt)
-    const desc = (a: Comment, b: Comment) =>
-        +new Date(b.createdAt) - +new Date(a.createdAt)
-    roots.sort(desc)
-    roots.forEach((r) => r.children.sort(asc))
-    return roots
-}
-
 /* ---------- tiny emoji list ---------- */
 const EMOJIS = ['😊', '😍', '😅', '🔥', '👏', '👍', '🎉', '❤️', '😢', '🤔']
 
 /* ================= PAGE ================= */
 export default function ArtDetail({ id }: { id: string }) {
-    const artId = Number(id)
-
-    const [art, setArt] = useState<Art | null>(null)
-    const [related, setRelated] = useState<Art[]>([])
-    const [comments, setComments] = useState<Comment[]>([])
+    const queryClient = useQueryClient()
+    const currentUser = useAppSelector((state) => state.auth.user)
     const [imgLoaded, setImgLoaded] = useState(false)
+    const [showProtectionMessage, setShowProtectionMessage] = useState(false)
 
-    // like for main artwork
-    const [artLikes, setArtLikes] = useState(0)
-    const [artLiked, setArtLiked] = useState(false)
+    // Fetch artwork data
+    const { data: art, isLoading, error } = useQuery({
+        queryKey: ['artwork', id],
+        queryFn: () => artworkService.getArtworkById(id),
+        staleTime: 1000 * 60 * 5, // 5 minutes
+    })
+
+    // Fetch related artworks with infinite scroll
+    const {
+        data: relatedData,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isLoading: relatedLoading,
+    } = useInfiniteQuery({
+        queryKey: ['artworks', 'related', art?.categoryId, id],
+        queryFn: async ({ pageParam = 0 }) => {
+            const result = await artworkService.getArtworks({
+                categoryId: art?.categoryId,
+                status: 'PUBLISHED',
+                limit: 12,
+                offset: pageParam,
+            })
+            // Filter out current artwork
+            return {
+                ...result,
+                data: result.data.filter(a => a.id !== id)
+            }
+        },
+        getNextPageParam: (lastPage, pages) => {
+            const totalFetched = pages.reduce((sum, page) => sum + page.data.length, 0)
+            return totalFetched < lastPage.total ? totalFetched : undefined
+        },
+        enabled: !!art?.categoryId,
+        initialPageParam: 0,
+    })
+
+    // Intersection observer for infinite scroll
+    const loadMoreRef = useRef<HTMLDivElement>(null)
+    useEffect(() => {
+        if (!loadMoreRef.current || !hasNextPage || isFetchingNextPage) return
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    fetchNextPage()
+                }
+            },
+            { threshold: 0.1 }
+        )
+
+        observer.observe(loadMoreRef.current)
+        return () => observer.disconnect()
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage])
+
+    // Fetch comments
+    const { data: comments = [] } = useQuery({
+        queryKey: ['comments', id],
+        queryFn: () => artworkService.getComments(id),
+        enabled: !!id,
+    })
+
+    // Like mutation
+    const likeMutation = useMutation({
+        mutationFn: () => artworkService.toggleLike(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['artwork', id] })
+        },
+    })
+
+    // Create comment mutation
+    const createCommentMutation = useMutation({
+        mutationFn: (data: { content: string; parentId?: string }) =>
+            artworkService.createComment(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['comments', id] })
+        },
+    })
+
+    // Delete comment mutation
+    const deleteCommentMutation = useMutation({
+        mutationFn: (commentId: string) => artworkService.deleteComment(commentId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['comments', id] })
+        },
+    })
+
+    // Update comment mutation
+    const updateCommentMutation = useMutation({
+        mutationFn: ({ commentId, content }: { commentId: string; content: string }) =>
+            artworkService.updateComment(commentId, { content }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['comments', id] })
+        },
+    })
+
+    // Like comment mutation
+    const likeCommentMutation = useMutation({
+        mutationFn: (commentId: string) => artworkService.toggleCommentLike(commentId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['comments', id] })
+        },
+    })
 
     // root composer
     const root = useTextHistory('')
@@ -100,39 +180,12 @@ export default function ArtDetail({ id }: { id: string }) {
     const [italic, setItalic] = useState(false)
     const [underline, setUnderline] = useState(false)
     const [showEmojiRoot, setShowEmojiRoot] = useState(false)
+    const [replyTo, setReplyTo] = useState<string | null>(null)
     const rootInputRef = useRef<HTMLInputElement>(null)
     const emojiRootRef = useRef<HTMLDivElement>(null)
 
-    // reply state
-    const [replyTo, setReplyTo] = useState<string | null>(null)
-
-    // format map per comment id
-    const [formatMap, setFormatMap] = useState<
-        Record<string, { b: boolean; i: boolean; u: boolean }>
-    >({})
-
-    // comment like map
-    const [commentLikes, setCommentLikes] = useState<Record<string, number>>({})
-    const [commentLiked, setCommentLiked] = useState<Record<string, boolean>>({})
-
-    useEffect(() => {
-        let stop = false
-            ; (async () => {
-                const [a, cs, rs] = await Promise.all([
-                    getArt(artId),
-                    listComments(artId),
-                    getRelated(artId, 14),
-                ])
-                if (stop) return
-                setArt(a)
-                setArtLikes(a?.likes ?? 0)
-                setComments(cs)
-                setRelated(rs)
-            })()
-        return () => {
-            stop = true
-        }
-    }, [artId])
+    // Flatten all pages of related artworks
+    const related = relatedData?.pages.flatMap(page => page.data) || []
 
     // hide emoji when clicking outside (root)
     useEffect(() => {
@@ -173,46 +226,67 @@ export default function ArtDetail({ id }: { id: string }) {
         })
     }
 
-    // mock like API
-    const fakeLikeApi = async (liked: boolean) =>
-        new Promise<void>((r) => setTimeout(r, 120))
-
-    const toggleArtLike = async () => {
-        const nextLiked = !artLiked
-        setArtLiked(nextLiked)
-        setArtLikes((n) => (nextLiked ? n + 1 : Math.max(0, n - 1)))
-        await fakeLikeApi(nextLiked)
+    const toggleArtLike = () => {
+        likeMutation.mutate()
     }
 
-    const sendRoot = async () => {
-        const t = root.value
-        if (isEffectivelyEmpty(t)) return
-        const c = await addComment(artId, t)
-        setComments((p) => [c, ...p])
-        setFormatMap((m) => ({ ...m, [c.id]: { b: bold, i: italic, u: underline } }))
-        root.setValue('')
-        setBold(false)
-        setItalic(false)
-        setUnderline(false)
+    const handleImageProtection = () => {
+        setShowProtectionMessage(true)
+        setTimeout(() => setShowProtectionMessage(false), 3000)
     }
 
-    const handleCommentLike = async (id: string) => {
-        const next = !(commentLiked[id] ?? false)
-        setCommentLiked((m) => ({ ...m, [id]: next }))
-        setCommentLikes((m) => ({
-            ...m,
-            [id]: (m[id] ?? 0) + (next ? 1 : -1),
-        }))
-        await fakeLikeApi(next)
-    }
+    const sendRootComment = () => {
+        const content = root.value.trim()
+        if (isEffectivelyEmpty(content)) return
 
-    const TAGS = ['Realism', 'Impressionism', 'Cubism', 'Surrealism', 'Abstract', 'Vintage']
-
-    if (!art) {
-        return (
-            <div className="p-6 text-gray-500 dark:text-gray-400">Not found.</div>
+        createCommentMutation.mutate(
+            { content },
+            {
+                onSuccess: () => {
+                    root.setValue('')
+                    setBold(false)
+                    setItalic(false)
+                    setUnderline(false)
+                },
+            }
         )
     }
+
+    const sendReply = (parentId: string, content: string) => {
+        if (isEffectivelyEmpty(content)) return
+
+        createCommentMutation.mutate(
+            { content, parentId },
+            {
+                onSuccess: () => {
+                    setReplyTo(null)
+                },
+            }
+        )
+    }
+
+    if (isLoading) {
+        return (
+            <div className="p-6 text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+                <p className="mt-4 text-gray-500 dark:text-gray-400">Loading artwork...</p>
+            </div>
+        )
+    }
+
+    if (error || !art) {
+        return (
+            <div className="p-6 text-center text-gray-500 dark:text-gray-400">
+                <p>Artwork not found.</p>
+                <Link href="/explore" className="mt-4 inline-block text-purple-600 hover:text-purple-700">
+                    ← Back to Explore
+                </Link>
+            </div>
+        )
+    }
+
+    const ratio = art.height / art.width
+    const isLikedByUser = art.likes?.some(like => like.userId) || false
 
     return (
         <div className="min-h-full h-[calc(100vh-160px)] rounded-xl text-gray-900 dark:text-gray-100">
@@ -227,14 +301,14 @@ export default function ArtDetail({ id }: { id: string }) {
                 </Link>
             </div>
 
-            <div className="mx-auto h-[calc(100%-38px)] overflow-y-auto">
+            <div className="mx-auto h-[calc(100%-38px)] overflow-y-auto p-0.5">
                 {/* Top: image + info */}
-                <div className="grid grid-cols-1 md:grid-cols-[322px,1fr] lg:grid-cols-[322px,1fr] gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] gap-6 w-fit">
                     {/* Left image */}
-                    <div className="relative rounded-2xl overflow-hidden bg-gray-100 ring-1 ring-black/5 dark:bg-neutral-900 dark:ring-white/10">
+                    <div className="relative rounded-2xl overflow-hidden bg-gray-100 ring-1 ring-black/5 dark:bg-neutral-900 dark:ring-white/10 flex items-center justify-center min-h-[400px]">
                         {/* zoom button top-left */}
                         <a
-                            href={art.image}
+                            href={getArtworkImageUrl(art.imageUrl) || ''}
                             target="_blank"
                             rel="noreferrer"
                             className="absolute left-2 top-2 z-10 rounded-full bg-black/70 text-white p-2 hover:bg-black/80"
@@ -242,23 +316,56 @@ export default function ArtDetail({ id }: { id: string }) {
                         >
                             <ArrowsOutSimple size={16} />
                         </a>
+                        {!imgLoaded && (
+                            <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-neutral-800" />
+                        )}
                         <div
-                            className="relative w-full h-full"
-                            style={{ paddingBottom: `${art.ratio * 100}%` }}
+                            className="relative w-fit h-full max-h-[600px] flex items-center justify-center p-2 select-none"
+                            onContextMenu={(e) => {
+                                e.preventDefault()
+                                handleImageProtection()
+                            }}
+                            onDragStart={(e) => e.preventDefault()}
                         >
-                            {!imgLoaded && (
-                                <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-neutral-800" />
-                            )}
                             <Image
-                                src={art.image}
+                                src={getArtworkImageUrl(art.imageUrl) || ''}
                                 alt={art.title}
-                                fill
+                                width={art.width}
+                                height={art.height}
                                 unoptimized
                                 priority
-                                className={`object-fill transition-opacity ${imgLoaded ? 'opacity-100' : 'opacity-0'
+                                draggable={false}
+                                className={`object-contain rounded-lg max-w-fit max-h-full transition-opacity select-none pointer-events-none ${imgLoaded ? 'opacity-100' : 'opacity-0'
                                     }`}
                                 onLoad={() => setImgLoaded(true)}
+                                onContextMenu={(e) => e.preventDefault()}
+                                style={{
+                                    width: 'auto',
+                                    height: 'auto',
+                                    maxWidth: '100%',
+                                    maxHeight: '100%',
+                                    userSelect: 'none',
+                                    WebkitUserSelect: 'none',
+                                    MozUserSelect: 'none',
+                                }}
                             />
+                            {/* Invisible overlay to prevent direct image access */}
+                            <div
+                                className="absolute inset-0 cursor-default"
+                                onContextMenu={(e) => {
+                                    e.preventDefault()
+                                    handleImageProtection()
+                                }}
+                                onDragStart={(e) => e.preventDefault()}
+                            />
+
+                            {/* Protection message */}
+                            {showProtectionMessage && (
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-6 py-3 rounded-lg shadow-lg backdrop-blur-sm animate-fade-in z-20">
+                                    <p className="text-sm font-medium">🔒 This artwork is protected</p>
+                                    <p className="text-xs text-gray-300 mt-1">Right-click and download are disabled</p>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -269,15 +376,16 @@ export default function ArtDetail({ id }: { id: string }) {
                             <div className="flex items-center gap-2 text-[12px]">
                                 <button
                                     onClick={toggleArtLike}
-                                    className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 bg-gray-100 text-gray-800 ring-1 ring-black/5 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-100 dark:ring-white/10 dark:hover:bg-neutral-700"
+                                    disabled={likeMutation.isPending}
+                                    className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 bg-gray-100 text-gray-800 ring-1 ring-black/5 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-100 dark:ring-white/10 dark:hover:bg-neutral-700 disabled:opacity-50"
                                     aria-label="like"
                                 >
                                     <Heart
                                         size={14}
-                                        weight={artLiked ? 'fill' : 'regular'}
+                                        weight={isLikedByUser ? 'fill' : 'regular'}
                                         className="text-rose-600"
                                     />
-                                    {artLikes}
+                                    {art.likeCount}
                                 </button>
                                 <button className="rounded-lg p-1.5 bg-gray-100 text-gray-800 ring-1 ring-black/5 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-100 dark:ring-white/10 dark:hover:bg-neutral-700">
                                     <ChatCircle size={14} />
@@ -285,18 +393,17 @@ export default function ArtDetail({ id }: { id: string }) {
                                 <button className="rounded-lg p-1.5 bg-gray-100 text-gray-800 ring-1 ring-black/5 hover:bg-gray-200 dark:bg-neutral-800 dark:text-gray-100 dark:ring-white/10 dark:hover:bg-neutral-700">
                                     <ShareFat size={14} />
                                 </button>
-                                <span className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 bg-gray-100 text-gray-800 ring-1 ring-black/5 dark:bg-neutral-800 dark:text-gray-100 dark:ring-white/10">
-                                    Physical artwork available: <b className="ml-1">5</b>
-                                </span>
                             </div>
 
-                            {/* museum label */}
-                            <div className="flex items-center gap-2 text-[12px] text-gray-600 dark:text-gray-300">
-                                <div className="bg-[#9C27B0]/80 rounded-md p-1 text-white">
-                                    <Building size={13} />
+                            {/* Organization label (if exists) */}
+                            {art.organization && (
+                                <div className="flex items-center gap-2 text-[12px] text-gray-600 dark:text-gray-300">
+                                    <div className="bg-[#9C27B0]/80 rounded-md p-1 text-white">
+                                        <Building size={13} />
+                                    </div>
+                                    <span className="tracking-wide font-semibold">{art.organization.name.toUpperCase()}</span>
                                 </div>
-                                <span className="tracking-wide font-semibold">TATE MODERN</span>
-                            </div>
+                            )}
 
                             {/* title + desc */}
                             <div className="flex flex-col gap-4">
@@ -304,193 +411,299 @@ export default function ArtDetail({ id }: { id: string }) {
                                     {art.title.toUpperCase()}
                                 </h1>
                                 <p className="text-[13px] text-gray-700 dark:text-gray-300">
-                                    {art.description}
+                                    {art.description || 'No description available.'}
                                 </p>
                             </div>
 
                             {/* tags */}
-                            <div className="flex flex-wrap gap-3">
-                                {['Realism', 'Impressionism', 'Cubism', 'Surrealism', 'Abstract', 'Vintage'].map(t => (
-                                    <span key={t} className="rounded-full px-2.5 py-1 text-[12px] bg-gray-100 text-gray-800 ring-1 ring-black/5 dark:bg-neutral-800 dark:text-gray-100 dark:ring-white/10">{t}</span>
-                                ))}
-                            </div>
+                            {art.tags && art.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-3">
+                                    {art.tags.map(t => (
+                                        <span key={t} className="rounded-full px-2.5 py-1 text-[12px] bg-gray-100 text-gray-800 ring-1 ring-black/5 dark:bg-neutral-800 dark:text-gray-100 dark:ring-white/10">{t}</span>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Metadata */}
+                            {(art.medium || art.dimensions || art.year) && (
+                                <div className="text-[13px] space-y-1 text-gray-600 dark:text-gray-400">
+                                    {art.medium && <div><b>Medium:</b> {art.medium}</div>}
+                                    {art.dimensions && <div><b>Dimensions:</b> {art.dimensions}</div>}
+                                    {art.year && <div><b>Year:</b> {art.year}</div>}
+                                </div>
+                            )}
 
                             {/* author */}
                             <div className="flex items-center gap-2">
-                                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-fuchsia-600 grid place-items-center text-[11px] font-bold text-white">
-                                    {art.author.slice(0, 1)}
-                                </div>
+                                {art.creator.avatar ? (
+                                    <Image src={art.creator.avatar} alt={art.creator.username} width={32} height={32} className="rounded-full" />
+                                ) : (
+                                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-fuchsia-600 grid place-items-center text-[11px] font-bold text-white">
+                                        {art.creator.firstName.slice(0, 1)}{art.creator.lastName.slice(0, 1)}
+                                    </div>
+                                )}
                                 <div className="text-[13px] leading-tight">
-                                    <div className="font-medium">{art.author}</div>
-                                    <div className="text-gray-500 dark:text-gray-400">Artist</div>
+                                    <div className="font-medium">{art.creator.firstName} {art.creator.lastName}</div>
+                                    <div className="text-gray-500 dark:text-gray-400">@{art.creator.username}</div>
                                 </div>
                             </div>
                         </div>
 
                         {/* prices */}
-                        <div className="flex flex-wrap gap-3 mb-5">
-                            <button className="gap-2 items-center rounded-xl flex px-3 py-2 text-[12px] bg-[#eeee] dark:bg-neutral-800">
-                                <span className="text-[14px] font-bold text-[#9C27B0]/80">Digital</span>
-                                <span className="text-[14px] font-bold text-[#9C27B0]/80">12$</span>
-                            </button>
-                            <button className="gap-2 items-center rounded-xl flex px-3 py-2 text-[12px] text-white bg-[#9C27B0]/80 ring-1 ring-purple-500/40 hover:bg-[#9C27B0]/80">
-                                <span className="text-[14px] font-bold">Physical</span>
-                                <span className="text-[14px] font-bold">30$</span>
-                            </button>
-                        </div>
+                        {art.price && (
+                            <div className="flex flex-wrap gap-3 mb-5">
+                                <div className="gap-2 items-center rounded-xl flex px-3 py-2 text-[12px] bg-[#eeee] dark:bg-neutral-800">
+                                    <span className="text-[14px] font-bold text-[#9C27B0]/80">Price</span>
+                                    <span className="text-[14px] font-bold text-[#9C27B0]/80">${art.price}</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* notes */}
-                <div className="mt-3 text-[12px] leading-5 text-gray-600 dark:text-gray-400 space-y-1.5">
-                    <p><b>Digital Artwork:</b> You will receive a high-resolution digital file (JPG/PNG/PDF) via email. You can download and print it yourself at any size and on any material you prefer.</p>
-                    <p><b>Physical Artwork:</b> You will receive the original painting (or printed copy) shipped to your address. Carefully packaged and delivered via a trusted courier.</p>
+                {/* Category */}
+                <div className="mt-6 text-[13px]">
+                    <span className="text-gray-600 dark:text-gray-400">Category: </span>
+                    <span className="font-medium text-purple-600 dark:text-purple-400">{art.category.name}</span>
+                    {art.category.description && (
+                        <p className="mt-1 text-gray-500 dark:text-gray-400">{art.category.description}</p>
+                    )}
                 </div>
 
-                {/* comments */}
+                {/* Comments Section */}
                 <section className="mt-6">
                     <div className="mb-2 text-sm font-semibold">{comments.length} Comments</div>
 
                     <div className="space-y-3">
-                        {buildTree(comments).map((node) => (
+                        {comments.map((comment) => (
                             <CommentItem
-                                key={node.id}
-                                node={node}
-                                liked={commentLiked[node.id] ?? false}
-                                likeCount={commentLikes[node.id] ?? 0}
-                                onToggleLike={() => handleCommentLike(node.id)}
-                                onStartReply={() => setReplyTo(node.id)}
-                                replying={replyTo === node.id}
+                                key={comment.id}
+                                comment={comment}
+                                currentUser={currentUser}
+                                replyTo={replyTo}
+                                onStartReply={(id) => setReplyTo(id)}
                                 onCancelReply={() => setReplyTo(null)}
-                                onSendReply={async (text, fmtFlags) => {
-                                    if (!replyTo) return
-                                    if (isEffectivelyEmpty(text)) return
-                                    const c = await addComment(artId, text)
-                                    c.parentId = replyTo
-                                    setComments((p) => [c, ...p])
-                                    setFormatMap((m) => ({ ...m, [c.id]: fmtFlags }))
-                                    setReplyTo(null) // sẽ kích hoạt useEffect trong CommentItem để reset an toàn lần nữa
+                                onSendReply={sendReply}
+                                onLike={(commentId) => likeCommentMutation.mutate(commentId)}
+                                onEdit={(commentId, content) => updateCommentMutation.mutate({ commentId, content })}
+                                onDelete={(commentId) => {
+                                    if (confirm('Are you sure you want to delete this comment?')) {
+                                        deleteCommentMutation.mutate(commentId)
+                                    }
                                 }}
-                                formatMap={formatMap}
                             />
                         ))}
                     </div>
 
-                    {/* root composer */}
-                    <div className="mt-4 rounded-2xl p-5 bg-[#eeeeee] dark:bg-[#1E1B26]">
-                        <div className="h-[44px] rounded-xl flex items-center px-2 bg-white text-gray-700 dark:bg-[#121212] dark:text-gray-300">
-                            <button onClick={() => setBold(v => !v)} className={`px-2 py-1 hover:text-black dark:hover:text-white ${bold ? 'font-bold' : ''}`} title="Bold"><TextB size={16} /></button>
-                            <button onClick={() => setItalic(v => !v)} className={`px-2 py-1 hover:text-black dark:hover:text-white ${italic ? 'italic' : ''}`} title="Italic"><TextItalic size={16} /></button>
-                            <button onClick={() => setUnderline(v => !v)} className={`px-2 py-1 hover:text-black dark:hover:text-white ${underline ? 'underline' : ''}`} title="Underline"><TextUnderline size={16} /></button>
+                    {/* Root comment composer */}
+                    {currentUser && (
+                        <>
+                            <div className="mt-4 rounded-2xl p-5 bg-[#eeeeee] dark:bg-[#1E1B26]">
+                                <div className="h-[44px] rounded-xl flex items-center px-2 bg-white text-gray-700 dark:bg-[#121212] dark:text-gray-300">
+                                    <button onClick={() => setBold(v => !v)} className={`px-2 py-1 hover:text-black dark:hover:text-white ${bold ? 'font-bold' : ''}`} title="Bold"><TextB size={16} /></button>
+                                    <button onClick={() => setItalic(v => !v)} className={`px-2 py-1 hover:text-black dark:hover:text-white ${italic ? 'italic' : ''}`} title="Italic"><TextItalic size={16} /></button>
+                                    <button onClick={() => setUnderline(v => !v)} className={`px-2 py-1 hover:text-black dark:hover:text-white ${underline ? 'underline' : ''}`} title="Underline"><TextUnderline size={16} /></button>
 
-                            <div className="relative" ref={emojiRootRef}>
-                                <button onClick={() => setShowEmojiRoot(s => !s)} className="px-2 py-1 hover:text-black dark:hover:text-white" title="Emojis"><Smiley size={16} /></button>
-                                {showEmojiRoot && (
-                                    <div className="absolute z-20 mt-2 rounded-xl bg-white shadow-lg ring-1 ring-black/5 p-2 dark:bg-neutral-900 dark:ring-white/10">
-                                        <div className="flex gap-1">
-                                            {EMOJIS.map(e => (
-                                                <button key={e} onClick={() => insertAtCursor(rootInputRef.current, e, root.setValue)} className="px-1.5 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10">{e}</button>
-                                            ))}
-                                        </div>
+                                    <div className="relative" ref={emojiRootRef}>
+                                        <button onClick={() => setShowEmojiRoot(s => !s)} className="px-2 py-1 hover:text-black dark:hover:text-white" title="Emojis"><Smiley size={16} /></button>
+                                        {showEmojiRoot && (
+                                            <div className="absolute z-20 mt-2 rounded-xl bg-white shadow-lg ring-1 ring-black/5 p-2 dark:bg-neutral-900 dark:ring-white/10">
+                                                <div className="flex gap-1">
+                                                    {EMOJIS.map(e => (
+                                                        <button key={e} onClick={() => insertAtCursor(rootInputRef.current, e, root.setValue)} className="px-1.5 py-1 rounded hover:bg-black/5 dark:hover:bg-white/10">{e}</button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+
+                                    <button onClick={root.undo} className="ml-2 px-2 py-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200" title="Undo"><ArrowUUpLeft size={16} /></button>
+                                    <button onClick={root.redo} className="px-2 py-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200" title="Redo"><ArrowUUpRight size={16} /></button>
+
+                                    <button className="ml-auto px-2 py-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"><DotsThree size={18} /></button>
+                                </div>
+
+                                <div className="mt-2">
+                                    <input
+                                        ref={rootInputRef}
+                                        className="w-full h-[43px] rounded-xl p-3 text-sm outline-none bg-gray-100 text-gray-900 placeholder:text-gray-400 dark:bg-[#121212] dark:text-gray-100 dark:placeholder:text-gray-500"
+                                        placeholder="Write your comment"
+                                        value={root.value}
+                                        onChange={(e) => root.setValue(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && sendRootComment()}
+                                        style={{
+                                            fontWeight: bold ? 700 : 400,
+                                            fontStyle: italic ? 'italic' : 'normal',
+                                            textDecoration: underline ? 'underline' : 'none',
+                                        }}
+                                    />
+                                </div>
                             </div>
 
-                            <button onClick={root.undo} className="ml-2 px-2 py-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200" title="Undo"><ArrowUUpLeft size={16} /></button>
-                            <button onClick={root.redo} className="px-2 py-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200" title="Redo"><ArrowUUpRight size={16} /></button>
-
-                            <button className="ml-auto px-2 py-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"><DotsThree size={18} /></button>
-                        </div>
-
-                        <div className="mt-2">
-                            <input
-                                ref={rootInputRef}
-                                className="w-full h-[43px] rounded-xl p-3 text-sm outline-none bg-gray-100 text-gray-900 placeholder:text-gray-400 dark:bg-[#121212] dark:text-gray-100 dark:placeholder:text-gray-500"
-                                placeholder="Write your comment"
-                                value={root.value}
-                                onChange={(e) => root.setValue(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && sendRoot()}
-                                style={{
-                                    fontWeight: bold ? 700 : 400,
-                                    fontStyle: italic ? 'italic' : 'normal',
-                                    textDecoration: underline ? 'underline' : 'none',
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="mt-2 flex justify-end">
-                        <button onClick={sendRoot} className="inline-flex items-center gap-2 bg-[#9C27B0]/80 px-3 py-2 text-sm font-medium text-white hover:bg-[#9C27B0]/90 rounded-full">
-                            Comment <PaperPlaneRight size={16} />
-                        </button>
-                    </div>
+                            <div className="mt-2 flex justify-end">
+                                <button
+                                    onClick={sendRootComment}
+                                    disabled={createCommentMutation.isPending}
+                                    className="inline-flex items-center gap-2 bg-[#9C27B0]/80 px-3 py-2 text-sm font-medium text-white hover:bg-[#9C27B0]/90 rounded-full disabled:opacity-50"
+                                >
+                                    {createCommentMutation.isPending ? 'Posting...' : 'Comment'} <PaperPlaneRight size={16} />
+                                </button>
+                            </div>
+                        </>
+                    )}
                 </section>
 
-                {/* related */}
-                <div className="mt-8 mb-2 font-semibold">Related artworks</div>
-                <div className="w-full box-border">
-                    <div className="columns-2 sm:columns-3 md:columns-4 xl:columns-6 gap-2">
-                        {related.map((r, i) => (
-                            <Link key={`${r.id}-${i}`} href={`/explore/${r.id}`} className="mb-2 break-inside-avoid block overflow-hidden rounded-2xl bg-gray-100 ring-1 ring-black/5 dark:bg-neutral-900 dark:ring-white/10">
-                                <div className="relative w-full" style={{ paddingBottom: `${r.ratio * 100}%` }}>
-                                    <Image src={r.image} alt={r.title} fill className="object-cover" loading="lazy" unoptimized />
+                {/* Related Artworks */}
+                <section className="mt-8">
+                    <h2 className="text-lg font-semibold mb-4">
+                        Related Artworks
+                        {related.length > 0 && (
+                            <span className="ml-2 text-sm text-gray-500 dark:text-gray-400 font-normal">
+                                ({related.length} artworks)
+                            </span>
+                        )}
+                    </h2>
+
+                    {relatedLoading ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                            {[...Array(12)].map((_, i) => (
+                                <div key={i} className="aspect-[3/4] rounded-xl bg-gray-200 dark:bg-neutral-800 animate-pulse" />
+                            ))}
+                        </div>
+                    ) : related.length > 0 ? (
+                        <>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                                {related.map((r) => {
+                                    const artRatio = r.height / r.width
+                                    const isLikedByCurrentUser = r.likes?.some(like => like.userId === currentUser?.id) || false
+
+                                    return (
+                                        <Link
+                                            key={r.id}
+                                            href={`/explore/${r.id}`}
+                                            className="group block overflow-hidden rounded-xl bg-gray-100 ring-1 ring-black/5 dark:bg-neutral-900 dark:ring-white/10 hover:ring-2 hover:ring-purple-500/50 transition-all"
+                                        >
+                                            <div className="relative w-full" style={{ paddingBottom: `${Math.min(artRatio * 100, 150)}%` }}>
+                                                <Image
+                                                    src={getArtworkImageUrl(r.imageUrl) || ''}
+                                                    alt={r.title}
+                                                    fill
+                                                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                                    loading="lazy"
+                                                    unoptimized
+                                                />
+                                                {/* Overlay with info */}
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <div className="absolute bottom-0 left-0 right-0 p-2">
+                                                        <p className="text-white text-xs font-medium truncate">{r.title}</p>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <div className="flex items-center gap-1 text-white text-xs">
+                                                                <Heart size={12} weight={isLikedByCurrentUser ? 'fill' : 'regular'} />
+                                                                <span>{r.likeCount}</span>
+                                                            </div>
+                                                            <span className="text-white/70 text-xs">•</span>
+                                                            <span className="text-white/70 text-xs truncate">
+                                                                {r.creator.firstName} {r.creator.lastName}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    )
+                                })}
+                            </div>
+
+                            {/* Infinite scroll trigger */}
+                            {hasNextPage && (
+                                <div ref={loadMoreRef} className="mt-6 flex justify-center">
+                                    {isFetchingNextPage ? (
+                                        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600"></div>
+                                            <span className="text-sm">Loading more artworks...</span>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            onClick={() => fetchNextPage()}
+                                            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 rounded-lg transition-colors"
+                                        >
+                                            Load More
+                                        </button>
+                                    )}
                                 </div>
-                            </Link>
-                        ))}
-                    </div>
-                </div>
+                            )}
+                        </>
+                    ) : (
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                            <p>No related artworks found</p>
+                        </div>
+                    )}
+                </section>
             </div>
         </div>
     )
 }
 
-/* --------------- one comment item --------------- */
+/* --------------- CommentItem Component --------------- */
 function CommentItem({
-    node,
+    comment,
+    currentUser,
+    replyTo,
     onStartReply,
     onCancelReply,
-    replying,
     onSendReply,
-    liked,
-    likeCount,
-    onToggleLike,
-    formatMap,
+    onLike,
+    onEdit,
+    onDelete,
 }: {
-    node: CNode
-    replying: boolean
-    onStartReply: () => void
+    comment: ArtworkComment
+    currentUser: any
+    replyTo: string | null
+    onStartReply: (id: string) => void
     onCancelReply: () => void
-    onSendReply: (text: string, fmt: { b: boolean; i: boolean; u: boolean }) => void
-    liked: boolean
-    likeCount: number
-    onToggleLike: () => void
-    formatMap: Record<string, { b: boolean; i: boolean; u: boolean }>
+    onSendReply: (parentId: string, content: string) => void
+    onLike: (commentId: string) => void
+    onEdit: (commentId: string, content: string) => void
+    onDelete: (commentId: string) => void
 }) {
     const reply = useTextHistory('')
+    const edit = useTextHistory(comment.content)
     const [b, setB] = useState(false)
     const [i, setI] = useState(false)
     const [u, setU] = useState(false)
     const [showEmo, setShowEmo] = useState(false)
+    const [isEditing, setIsEditing] = useState(false)
+    const [showActions, setShowActions] = useState(false)
     const inputRef = useRef<HTMLInputElement>(null)
+    const editRef = useRef<HTMLInputElement>(null)
     const wrapRef = useRef<HTMLDivElement>(null)
+    const actionsRef = useRef<HTMLDivElement>(null)
 
-    // Ẩn emoji khi click ra ngoài
+    const replying = replyTo === comment.id
+    const isOwner = currentUser?.id === comment.userId
+    const isLikedByUser = comment.likes && comment.likes.length > 0
+
+    // Hide emoji and actions when click outside
     useEffect(() => {
         const onDoc = (e: MouseEvent) => {
-            if (!showEmo) return
-            if (!wrapRef.current?.contains(e.target as Node)) setShowEmo(false)
+            if (showEmo && !wrapRef.current?.contains(e.target as Node)) {
+                setShowEmo(false)
+            }
+            if (showActions && !actionsRef.current?.contains(e.target as Node)) {
+                setShowActions(false)
+            }
         }
         document.addEventListener('mousedown', onDoc)
         return () => document.removeEventListener('mousedown', onDoc)
-    }, [showEmo])
+    }, [showEmo, showActions])
 
-    // Khi đóng composer hoặc sau khi gửi → reset tất cả
+    // Reset when closing composer
     useEffect(() => {
         if (!replying) {
             reply.setValue('')
             setB(false); setI(false); setU(false); setShowEmo(false)
         }
-    }, [replying])
+    }, [replying, reply])
 
     const insertEmoji = (token: string) => {
         const el = inputRef.current
@@ -508,54 +721,92 @@ function CommentItem({
         })
     }
 
-    const fmtStyle = (id: string) => {
-        const f = formatMap[id]
-        return f
-            ? {
-                fontWeight: f.b ? 700 : 400,
-                fontStyle: f.i ? ('italic' as const) : 'normal',
-                textDecoration: f.u ? 'underline' : 'none',
-            }
-            : undefined
-    }
-
-    // Gửi và CLEAR tại chỗ để không lưu emoji cũ
     const handleSend = () => {
-        onSendReply(reply.value, { b, i, u })
+        onSendReply(comment.id, reply.value)
         reply.setValue('')
         setB(false); setI(false); setU(false); setShowEmo(false)
+    }
+
+    const handleEdit = () => {
+        onEdit(comment.id, edit.value)
+        setIsEditing(false)
+    }
+
+    const handleCancelEdit = () => {
+        edit.setValue(comment.content)
+        setIsEditing(false)
     }
 
     return (
         <div className="rounded-2xl px-4 py-3">
             <div className="flex items-start gap-3">
-                <div className="h-9 w-9 rounded-full bg-gray-200 text-gray-700 grid place-items-center text-[11px] font-bold dark:bg-neutral-800 dark:text-gray-100">
-                    {node.user.name.slice(0, 1)}
-                </div>
+                {comment.user.avatar ? (
+                    <Image src={comment.user.avatar} alt={comment.user.username} width={36} height={36} className="rounded-full" />
+                ) : (
+                    <div className="h-9 w-9 rounded-full bg-gray-200 text-gray-700 grid place-items-center text-[11px] font-bold dark:bg-neutral-800 dark:text-gray-100">
+                        {comment.user.firstName[0]}{comment.user.lastName[0]}
+                    </div>
+                )}
                 <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-gray-700 dark:text-gray-300">
-                        <span className="font-semibold">{node.user.name}</span>
-                        <span className="text-xs text-gray-500">{fmt(node.createdAt)}</span>
+                        <span className="font-semibold">{comment.user.firstName} {comment.user.lastName}</span>
+                        <span className="text-xs text-gray-500">{fmt(comment.createdAt)}</span>
+                        {comment.updatedAt !== comment.createdAt && (
+                            <span className="text-xs text-gray-400 italic">(edited)</span>
+                        )}
                     </div>
 
-                    <div className="mt-2 text-[15px] text-gray-900 dark:text-gray-100" style={fmtStyle(node.id)}>
-                        {node.content}
-                    </div>
+                    {isEditing ? (
+                        <div className="mt-2 space-y-2">
+                            <input
+                                ref={editRef}
+                                className="w-full rounded-lg px-3 py-2 text-sm outline-none bg-gray-100 text-gray-900 dark:bg-neutral-800 dark:text-gray-100"
+                                value={edit.value}
+                                onChange={(e) => edit.setValue(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleEdit()
+                                    if (e.key === 'Escape') handleCancelEdit()
+                                }}
+                            />
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handleEdit}
+                                    className="rounded-md bg-purple-600 hover:bg-purple-500 px-3 py-1 text-xs text-white"
+                                >
+                                    Save
+                                </button>
+                                <button
+                                    onClick={handleCancelEdit}
+                                    className="rounded-md bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-neutral-700 dark:text-gray-200 dark:hover:bg-neutral-600 px-3 py-1 text-xs"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="mt-2 text-[15px] text-gray-900 dark:text-gray-100">
+                            {comment.content}
+                        </div>
+                    )}
 
-                    {/* children */}
-                    {node.children.length > 0 && (
+                    {/* Replies */}
+                    {comment.replies && comment.replies.length > 0 && (
                         <div className="mt-3 space-y-3 pl-6 border-l border-black/10 dark:border-white/10">
-                            {node.children.map((ch) => (
+                            {comment.replies.map((ch) => (
                                 <div key={ch.id} className="flex items-start gap-3">
-                                    <div className="h-8 w-8 rounded-full bg-gray-200 text-gray-700 grid place-items-center text-[10px] font-bold dark:bg-neutral-800 dark:text-gray-100">
-                                        {ch.user.name.slice(0, 1)}
-                                    </div>
+                                    {ch.user.avatar ? (
+                                        <Image src={ch.user.avatar} alt={ch.user.username} width={32} height={32} className="rounded-full" />
+                                    ) : (
+                                        <div className="h-8 w-8 rounded-full bg-gray-200 text-gray-700 grid place-items-center text-[10px] font-bold dark:bg-neutral-800 dark:text-gray-100">
+                                            {ch.user.firstName[0]}{ch.user.lastName[0]}
+                                        </div>
+                                    )}
                                     <div className="flex-1">
                                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-gray-700 dark:text-gray-300">
-                                            <span className="font-medium">{ch.user.name}</span>
+                                            <span className="font-medium">{ch.user.firstName} {ch.user.lastName}</span>
                                             <span className="text-xs text-gray-500">{fmt(ch.createdAt)}</span>
                                         </div>
-                                        <div className="mt-1 text-sm text-gray-900 dark:text-gray-100" style={fmtStyle(ch.id)}>
+                                        <div className="mt-1 text-sm text-gray-900 dark:text-gray-100">
                                             {ch.content}
                                         </div>
                                     </div>
@@ -564,21 +815,57 @@ function CommentItem({
                         </div>
                     )}
 
-                    {/* actions */}
-                    <div className="mt-2 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                        <button onClick={onToggleLike} className="inline-flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200">
-                            <Heart size={14} className="text-rose-500" weight={liked ? 'fill' : 'regular'} />
-                            <span>{likeCount}</span>
-                        </button>
-                        {!replying && (
-                            <button className="hover:text-gray-700 dark:hover:text-gray-200" onClick={onStartReply}>
-                                Reply
+                    {/* Actions */}
+                    {currentUser && !isEditing && (
+                        <div className="mt-2 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                            <button
+                                onClick={() => onLike(comment.id)}
+                                className="inline-flex items-center gap-1 hover:text-rose-600 dark:hover:text-rose-400"
+                            >
+                                <Heart size={14} weight={isLikedByUser ? 'fill' : 'regular'} className={isLikedByUser ? 'text-rose-600' : ''} />
+                                <span>{comment.likeCount > 0 ? comment.likeCount : ''}</span>
                             </button>
-                        )}
-                        <DotsThreeVertical size={16} />
-                    </div>
+                            {!replying && (
+                                <button className="hover:text-gray-700 dark:hover:text-gray-200" onClick={() => onStartReply(comment.id)}>
+                                    Reply
+                                </button>
+                            )}
+                            {isOwner && (
+                                <div className="relative" ref={actionsRef}>
+                                    <button
+                                        onClick={() => setShowActions(!showActions)}
+                                        className="hover:text-gray-700 dark:hover:text-gray-200"
+                                    >
+                                        <DotsThreeVertical size={16} />
+                                    </button>
+                                    {showActions && (
+                                        <div className="absolute z-20 left-0 mt-1 rounded-lg bg-white shadow-lg ring-1 ring-black/5 dark:bg-neutral-800 dark:ring-white/10 py-1 min-w-[100px]">
+                                            <button
+                                                onClick={() => {
+                                                    setIsEditing(true)
+                                                    setShowActions(false)
+                                                }}
+                                                className="w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-neutral-700"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    onDelete(comment.id)
+                                                    setShowActions(false)
+                                                }}
+                                                className="w-full px-3 py-1.5 text-left text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-neutral-700"
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
-                    {/* reply composer */}
+                    {/* Reply composer */}
                     {replying && (
                         <div className="mt-3 pl-6" ref={wrapRef}>
                             <div className="h-[40px] rounded-xl flex items-center px-2 bg-gray-100 text-gray-700 dark:bg-[#1b1a20] dark:text-gray-300">
@@ -609,7 +896,7 @@ function CommentItem({
                                 <input
                                     ref={inputRef}
                                     className="w-full rounded-xl px-4 py-2.5 pr-28 text-sm outline-none bg-gray-100 text-gray-900 placeholder:text-gray-400 dark:bg-[#121212] dark:text-gray-100 dark:placeholder:text-gray-500"
-                                    placeholder={`Reply to ${node.user.name}`}
+                                    placeholder={`Reply to ${comment.user.firstName}`}
                                     value={reply.value}
                                     onChange={(e) => reply.setValue(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}

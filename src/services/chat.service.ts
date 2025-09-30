@@ -1,6 +1,24 @@
 import { ChatRoom, ChatMessage, ChatUser, FavoriteArtwork } from '@/types/chat';
 import { chatEndpoint } from '@/settings/endpoints';
 import axiosClient from '@/configs/axios-client';
+import { getArtworkImageUrl } from '@/utils/imageUtils';
+
+export interface CreateRoomDto {
+  name?: string;
+  type: 'DIRECT' | 'GROUP' | 'EXHIBITION';
+  participantIds: string[];
+}
+
+export interface SendMessageDto {
+  content: string;
+  type: 'TEXT' | 'IMAGE' | 'ARTWORK' | 'SYSTEM';
+  artworkId?: string;
+  replyToId?: string;
+}
+
+export interface AddReactionDto {
+  emoji: string;
+}
 
 export class ChatService {
   // Get all chat rooms
@@ -14,13 +32,10 @@ export class ChatService {
     }
   }
 
-  // Create a new chat room
-  static async createRoom(participants: ChatUser[]): Promise<ChatRoom> {
+  // Create a new chat room or get existing direct room
+  static async createRoom(dto: CreateRoomDto): Promise<ChatRoom> {
     try {
-      const response = await axiosClient.post(chatEndpoint.CREATE_ROOM(), {
-        participants: participants.map(p => p.id),
-        type: 'direct'
-      });
+      const response = await axiosClient.post(chatEndpoint.CREATE_ROOM(), dto);
       return response.data;
     } catch (error) {
       console.error('Error creating chat room:', error);
@@ -28,10 +43,23 @@ export class ChatService {
     }
   }
 
-  // Get messages for a specific room
-  static async getMessages(roomId: string): Promise<ChatMessage[]> {
+  // Get room by ID
+  static async getRoomById(roomId: string): Promise<ChatRoom> {
     try {
-      const response = await axiosClient.get(chatEndpoint.GET_MESSAGES(roomId));
+      const response = await axiosClient.get(chatEndpoint.GET_ROOM(roomId));
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching room:', error);
+      throw error;
+    }
+  }
+
+  // Get messages for a specific room
+  static async getMessages(roomId: string, page: number = 1, limit: number = 50): Promise<ChatMessage[]> {
+    try {
+      const response = await axiosClient.get(chatEndpoint.GET_MESSAGES(roomId), {
+        params: { page, limit },
+      });
       return response.data;
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -40,13 +68,9 @@ export class ChatService {
   }
 
   // Send a message
-  static async sendMessage(roomId: string, content: string, type: 'text' | 'image' | 'artwork' = 'text', artwork?: any): Promise<ChatMessage> {
+  static async sendMessage(roomId: string, dto: SendMessageDto): Promise<ChatMessage> {
     try {
-      const response = await axiosClient.post(chatEndpoint.POST_MESSAGE(roomId), {
-        content,
-        type,
-        artwork
-      });
+      const response = await axiosClient.post(chatEndpoint.POST_MESSAGE(roomId), dto);
       return response.data;
     } catch (error) {
       console.error('Error sending message:', error);
@@ -54,10 +78,34 @@ export class ChatService {
     }
   }
 
+  // Mark room as read
+  static async markRoomAsRead(roomId: string): Promise<{ success: boolean }> {
+    try {
+      const response = await axiosClient.post(chatEndpoint.MARK_READ(roomId));
+      return response.data;
+    } catch (error) {
+      console.error('Error marking room as read:', error);
+      throw error;
+    }
+  }
+
+  // Add or remove reaction
+  static async addReaction(messageId: string, dto: AddReactionDto): Promise<{ action: 'added' | 'removed' }> {
+    try {
+      const response = await axiosClient.post(chatEndpoint.ADD_REACTION(messageId), dto);
+      return response.data;
+    } catch (error) {
+      console.error('Error adding reaction:', error);
+      throw error;
+    }
+  }
+
   // Search users
   static async searchUsers(query: string): Promise<ChatUser[]> {
     try {
-      const response = await axiosClient.get(`/api/users/search?q=${encodeURIComponent(query)}`);
+      const response = await axiosClient.get(chatEndpoint.SEARCH_USERS(), {
+        params: { q: query },
+      });
       return response.data;
     } catch (error) {
       console.error('Error searching users:', error);
@@ -65,34 +113,42 @@ export class ChatService {
     }
   }
 
-  // Get favorite artworks
-  static async getFavoriteArtworks(): Promise<FavoriteArtwork[]> {
+  // Get recommended users
+  static async getRecommendedUsers(): Promise<ChatUser[]> {
     try {
-      const response = await axiosClient.get('/api/artworks/favorites');
+      const response = await axiosClient.get(chatEndpoint.RECOMMENDED_USERS());
       return response.data;
     } catch (error) {
+      console.error('Error fetching recommended users:', error);
+      throw error;
+    }
+  }
+
+  // Get favorite artworks (from saved artworks)
+  static async getFavoriteArtworks(): Promise<FavoriteArtwork[]> {
+    try {
+      const response = await axiosClient.get('/artworks', {
+        params: {
+          saved: true,
+          limit: 50,
+        },
+      });
+
+      if (!response.data || !response.data.data) {
+        return [];
+      }
+
+      return response.data.data.map((artwork: any) => ({
+        id: artwork.id,
+        title: artwork.title,
+        author: `${artwork.creator.firstName} ${artwork.creator.lastName}`,
+        image: getArtworkImageUrl(artwork.thumbnailUrl || artwork.imageUrl) || '',
+        category: artwork.category.name,
+        ratio: artwork.height / artwork.width,
+      }));
+    } catch (error) {
       console.error('Error fetching favorite artworks:', error);
-      throw error;
-    }
-  }
-
-  // Add artwork to favorites
-  static async addToFavorites(artworkId: string): Promise<void> {
-    try {
-      await axiosClient.post('/api/artworks/favorites', { artworkId });
-    } catch (error) {
-      console.error('Error adding to favorites:', error);
-      throw error;
-    }
-  }
-
-  // Remove artwork from favorites
-  static async removeFromFavorites(artworkId: string): Promise<void> {
-    try {
-      await axiosClient.delete(`/api/artworks/favorites/${artworkId}`);
-    } catch (error) {
-      console.error('Error removing from favorites:', error);
-      throw error;
+      return [];
     }
   }
 } 

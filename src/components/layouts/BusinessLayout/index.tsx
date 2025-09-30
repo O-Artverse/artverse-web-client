@@ -33,6 +33,7 @@ import { useRouter } from 'next/navigation';
 import { getUserAvatarUrl } from '@/utils/imageUtils';
 import { useTheme } from 'next-themes';
 import { useEffect } from 'react';
+import InvitationsButton from '@/components/modules/Invitations/InvitationsButton';
 
 interface BusinessLayoutProps {
   children: React.ReactNode;
@@ -228,6 +229,9 @@ const BusinessLayout: React.FC<BusinessLayoutProps> = ({ children }) => {
               }`}>
                 {isArtist ? 'Artist' : 'Organization'}
               </span>
+
+              {/* Invitations Button */}
+              <InvitationsButton />
 
               {/* User Avatar Dropdown */}
               <Dropdown placement="bottom-end">

@@ -8,6 +8,7 @@ import Image from 'next/image';
 import FavoriteArtworkSelector from './FavoriteArtworkSelector';
 import { getRoleBadge, renderAvatar } from './ChatList';
 import { useTheme } from 'next-themes';
+import { useAppSelector } from '@/store/hooks';
 
 interface ChatRoomProps {
   roomId: string;
@@ -15,17 +16,20 @@ interface ChatRoomProps {
 }
 
 export default function ChatRoom({ onBack }: ChatRoomProps) {
-  const { 
-    activeRoom, 
-    messages, 
-    sendMessage, 
-    sendArtwork, 
-    showFavoriteArtworks, 
+  const {
+    activeRoom,
+    messages,
+    sendMessage,
+    sendArtwork,
+    addReaction,
+    showFavoriteArtworks,
     setShowFavoriteArtworks,
-    getFavoriteArtworks 
+    getFavoriteArtworks
   } = useChat();
   const { theme } = useTheme();
   const darkMode = theme === 'dark';
+  const { user } = useAppSelector((state) => state.auth);
+  const currentUserId = user?.id || '';
 
   const [messageInput, setMessageInput] = useState('');
   const [artworks, setArtworks] = useState<FavoriteArtwork[]>([]);
@@ -51,13 +55,13 @@ export default function ChatRoom({ onBack }: ChatRoomProps) {
 
   const handleSendMessage = () => {
     if (messageInput.trim()) {
-      sendMessage(messageInput.trim(), 'text', replyingTo?.id);
+      sendMessage(messageInput.trim(), 'TEXT', replyingTo?.id);
       setMessageInput('');
       setReplyingTo(null);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -85,7 +89,8 @@ export default function ChatRoom({ onBack }: ChatRoomProps) {
     setShowEmojiPicker(showEmojiPicker === messageId ? null : messageId);
   };
 
-  const handleEmojiReaction = (): void => {
+  const handleEmojiReaction = (messageId: string, emoji: string): void => {
+    addReaction(messageId, emoji);
     setShowEmojiPicker(null);
   };  
 
@@ -98,7 +103,7 @@ export default function ChatRoom({ onBack }: ChatRoomProps) {
   }
   
   return (
-    <div onClick={() => setShowEmojiPicker(null)} className="flex flex-col h-full dark:bg-black/90 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg">
+    <div onClick={() => setShowEmojiPicker(null)} className="flex flex-col h-full dark:bg-[#1E1B26]/90 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-white/10">
         <div className="flex items-center gap-[10px]">
@@ -141,8 +146,9 @@ export default function ChatRoom({ onBack }: ChatRoomProps) {
                       </span>
                     </div>
                   )}
-                  <MessageBubble 
-                    message={message} 
+                  <MessageBubble
+                    message={message}
+                    currentUserId={currentUserId}
                     onReply={handleReply}
                     showAvatar={!prevMessage || prevMessage.senderId !== message.senderId}
                     findMessageById={findMessageById}
@@ -168,7 +174,7 @@ export default function ChatRoom({ onBack }: ChatRoomProps) {
                 ) : (
                   <ArrowBendDoubleUpLeftIcon weight='fill' size={16} className="text-black/60" />
                 )}
-              <span className="text-sm text-gray-600">Replying to {replyingTo.senderId}</span>
+              <span className="text-sm text-gray-600">Replying to {replyingTo.sender?.name || 'Unknown'}</span>
               <span className="text-xs text-gray-500 truncate max-w-[200px]">
                 {replyingTo.content}
               </span>
@@ -204,10 +210,10 @@ export default function ChatRoom({ onBack }: ChatRoomProps) {
           <div className="flex-1 relative">
             <input
               type="text"
-              placeholder={replyingTo ? `Reply to ${replyingTo.senderId}...` : "Enter messages..."}
+              placeholder={replyingTo ? `Reply to ${replyingTo.sender?.name || 'Unknown'}...` : "Enter messages..."}
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
               className="w-full px-4 py-2 pr-12 text-[14px] ts dark:text-white rounded-[12px] dark:bg-black bg-white shadow-sm shadow-[#000000]/25 focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder:text-gray-500 dark:placeholder:text-gray-500"
             />
             <button
@@ -226,20 +232,21 @@ export default function ChatRoom({ onBack }: ChatRoomProps) {
 
 interface MessageBubbleProps {
   message: ChatMessage;
+  currentUserId: string;
   onReply: (message: ChatMessage) => void;
   showAvatar: boolean;
   findMessageById: (id: string) => ChatMessage | null;
   showEmojiPicker: boolean;
   onShowEmojiPicker: () => void;
-  onEmojiReaction: (emoji: string) => void;
+  onEmojiReaction: (messageId: string, emoji: string) => void;
 }
 
-function MessageBubble({ message, onReply, showAvatar, findMessageById, showEmojiPicker, onShowEmojiPicker, onEmojiReaction }: MessageBubbleProps) {
-  const isOwn = message.senderId === 'current-user';
-  const isReply = !!message.replyTo; 
+function MessageBubble({ message, currentUserId, onReply, showAvatar, findMessageById, showEmojiPicker, onShowEmojiPicker, onEmojiReaction }: MessageBubbleProps) {
+  const isOwn = message.senderId === currentUserId;
+  const isReply = !!message.replyTo;
   const { theme } = useTheme();
   const darkMode = theme === 'dark';
-  const [reactions, setReactions] = useState(message.reactions || []);
+  const reactions = message.reactions || [];
   
   const originalMessage = isReply ? findMessageById(message.replyTo!) : null;
   
@@ -263,31 +270,10 @@ function MessageBubble({ message, onReply, showAvatar, findMessageById, showEmoj
     return { width: 200, height: 150 };
   };
   
-  const emojis = ['❤️', '😂', '😍', '😮', '👍', '👎'];
+  const emojis = ['❤️', '😂', '😍', '😮', '👍', '🔥'];
   
   const handleEmojiClick = (emoji: string) => {
-    setReactions(prevReactions => {
-      const currentUserId = 'current-user';
-      
-      const filteredReactions = prevReactions.map(r => ({
-        ...r,
-        users: r.users.filter((u: string) => u !== currentUserId),
-        count: r.users.filter((u: string) => u !== currentUserId).length
-      })).filter(r => r.count > 0);
-      
-      const existingReaction = filteredReactions.find(r => r.emoji === emoji);
-      
-      if (existingReaction) {
-        return filteredReactions.map(r => 
-          r.emoji === emoji 
-            ? { ...r, count: r.count + 1, users: [...r.users, currentUserId] }
-            : r
-        );
-      } else {
-        return [...filteredReactions, { emoji, count: 1, users: [currentUserId] }];
-      }
-    });
-    onEmojiReaction(emoji);
+    onEmojiReaction(message.id, emoji);
   };
   
   return (
@@ -295,12 +281,13 @@ function MessageBubble({ message, onReply, showAvatar, findMessageById, showEmoj
       <div className={`w-full max-w-[85%] ${isOwn ? 'flex flex-col items-end' : 'flex flex-col items-start'}`}>
         {!isOwn && showAvatar && (
           <div className="flex items-center gap-2 mb-1">
-            {renderAvatar({ 
-              id: message.senderId, 
-              name: message.senderId, 
-              status: 'online' 
+            {renderAvatar({
+              id: message.senderId,
+              name: message.sender?.name || 'Unknown',
+              avatar: message.sender?.avatar,
+              status: 'online'
             }, 'sm')}
-            <span className="text-xs text-gray-500">{message.senderId}</span>
+            <span className="text-xs text-gray-500">{message.sender?.name || 'Unknown'}</span>
           </div>
         )}
         
@@ -357,24 +344,49 @@ function MessageBubble({ message, onReply, showAvatar, findMessageById, showEmoj
           
           {/* Emoji Picker */}
           {showEmojiPicker && (
-            <div className="absolute top-[-62px] right-0 transform bg-white dark:bg-black rounded-lg p-1 shadow-lg z-10">
-              <div className="flex gap-2">
-                {emojis.map((emoji, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleEmojiClick(emoji)}
-                    className="text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-1"
-                  >
-                    {emoji}
-                  </button>
-                ))}
+            <>
+              {/* Backdrop to close picker */}
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => onShowEmojiPicker()}
+              />
+
+              <div
+                className={`absolute bottom-full mb-2 bg-white dark:bg-[#1a1a1a] rounded-lg border border-gray-200 dark:border-white/10 shadow-xl z-50 ${
+                  isOwn ? 'right-0' : 'left-0'
+                }`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p-1.5">
+                  <div className="flex gap-1">
+                    {emojis.map((emoji, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleEmojiClick(emoji)}
+                        className="text-xl hover:bg-gray-100 dark:hover:bg-white/10 rounded-md p-1.5 transition-all hover:scale-110 active:scale-95"
+                        title={`React with ${emoji}`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {/* Arrow indicator */}
+                <div
+                  className={`absolute top-full w-0 h-0 border-[6px] border-transparent ${
+                    isOwn
+                      ? 'right-3 border-t-white dark:border-t-[#1a1a1a]'
+                      : 'left-3 border-t-white dark:border-t-[#1a1a1a]'
+                  }`}
+                  style={{ marginTop: '-1px' }}
+                />
               </div>
-            </div>
+            </>
           )}
           
           {/* Reaction and Reply Icons */}
           {!isOwn ? (
-            <div className={`absolute top-[50%] -right-8 opacity-0 group-hover:opacity-100 transition-opacity`}>
+            <div className={`absolute top-[30%] -right-12 opacity-0 group-hover:opacity-100 transition-opacity`}>
               <div className="flex">
               <button 
                   className=" hover:bg-white hover:dark:bg-black rounded-full transition-colors"
@@ -403,7 +415,7 @@ function MessageBubble({ message, onReply, showAvatar, findMessageById, showEmoj
               </div>
             </div>
             ) : (
-              <div className={` absolute top-[50%] -left-8 opacity-0 group-hover:opacity-100 transition-opacity`}>
+              <div className={` absolute top-[30%] -left-12 opacity-0 group-hover:opacity-100 transition-opacity`}>
               <div className="flex">
               <button 
                   className=" hover:bg-white hover:dark:bg-black rounded-full transition-colors"

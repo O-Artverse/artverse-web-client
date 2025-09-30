@@ -58,11 +58,15 @@ const orderEndpoint = {
 }
 
 export const chatEndpoint = {
-    GET_ROOMS: () => '/api/chatrooms',
-    CREATE_ROOM: () => '/api/chatrooms',
-    GET_MESSAGES: (roomId: string) => `/api/chatrooms/${roomId}/messages`,
-    POST_MESSAGE: (roomId: string) => `/api/chatrooms/${roomId}/messages`,
-    GET_SHOP_ROOMS: (shopId: string) => `/api/chatrooms/shop/${shopId}`,
+    GET_ROOMS: () => '/chat/rooms',
+    CREATE_ROOM: () => '/chat/rooms',
+    GET_ROOM: (roomId: string) => `/chat/rooms/${roomId}`,
+    GET_MESSAGES: (roomId: string) => `/chat/rooms/${roomId}/messages`,
+    POST_MESSAGE: (roomId: string) => `/chat/rooms/${roomId}/messages`,
+    MARK_READ: (roomId: string) => `/chat/rooms/${roomId}/read`,
+    ADD_REACTION: (messageId: string) => `/chat/messages/${messageId}/reactions`,
+    SEARCH_USERS: () => '/chat/users/search',
+    RECOMMENDED_USERS: () => '/chat/users/recommended',
 }
 
 export {

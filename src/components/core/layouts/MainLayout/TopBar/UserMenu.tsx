@@ -133,7 +133,9 @@ export const UserMenu = () => {
         <div className='
          top-full bg-[#FFFFFF]/90 dark:bg-[#1E1B26]/90 
         absolute right-3 w-[338px] [box-shadow:0_1px_4px_rgba(0,0,0,0.2)]  py-2 z-50 rounded-xl flex flex-col gap-[8px] p-[12px] mt-3'>
-          <div className='flex items-center gap-[8px] p-[12px] hover:bg-gray-100 dark:hover:bg-black transition-all rounded-lg'>
+          <div className='flex items-center gap-[8px] p-[12px] hover:bg-gray-100 dark:hover:bg-black transition-all rounded-lg'
+          onClick={() => { setShowUserMenu(false); router.push('/profile'); }}
+          >
             <div className='w-[48px] h-[48px] rounded-lg overflow-hidden relative bg-gray-200 dark:bg-gray-700 flex items-center justify-center'>
               {mounted && user?.avatar ? (
                 <Image
