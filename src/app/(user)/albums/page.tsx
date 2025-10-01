@@ -81,7 +81,7 @@ export default function AlbumsPage() {
       {albums && albums.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {albums.map((album) => {
-            const coverImage = getArtworkImageUrl(album.coverImage || album.artworks?.[0]?.artwork.imageUrl)
+            const coverImage = album.coverImage || album.artworks?.[0]?.artwork.imageUrl
             const artworkCount = album._count?.artworks || 0
 
             return (
