@@ -585,7 +585,7 @@ export default function ArtDetail({ id }: { id: string }) {
                                         >
                                             <div className="relative w-full" style={{ paddingBottom: `${Math.min(artRatio * 100, 150)}%` }}>
                                                 <Image
-                                                    src={getArtworkImageUrl(r.imageUrl) || ''}
+                                                    src={r.imageUrl || ''}
                                                     alt={r.title}
                                                     fill
                                                     className="object-cover group-hover:scale-105 transition-transform duration-300"
