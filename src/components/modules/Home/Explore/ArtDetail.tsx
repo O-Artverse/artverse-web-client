@@ -23,7 +23,7 @@ import {
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import artworkService, { type Artwork, type ArtworkComment } from '@/services/artwork.service'
 import { useAppSelector } from '@/store/hooks'
-import { getArtworkImageUrl } from '@/utils/imageUtils'
+import { getArtworkImageUrl, getImageUrl } from '@/utils/imageUtils'
 
 /* ---------------- helpers ---------------- */
 const fmt = (d: string) => new Date(d).toLocaleString()
@@ -328,7 +328,7 @@ export default function ArtDetail({ id }: { id: string }) {
                             onDragStart={(e) => e.preventDefault()}
                         >
                             <Image
-                                src={getArtworkImageUrl(art.imageUrl) || ''}
+                                src={art.imageUrl || ''}
                                 alt={art.title}
                                 width={art.width}
                                 height={art.height}
@@ -436,7 +436,7 @@ export default function ArtDetail({ id }: { id: string }) {
                             {/* author */}
                             <div className="flex items-center gap-2">
                                 {art.creator.avatar ? (
-                                    <Image src={art.creator.avatar} alt={art.creator.username} width={32} height={32} className="rounded-full" />
+                                    <Image src={getImageUrl(art.creator.avatar) || ''} alt={art.creator.username} width={32} height={32} className="rounded-full" />
                                 ) : (
                                     <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-fuchsia-600 grid place-items-center text-[11px] font-bold text-white">
                                         {art.creator.firstName.slice(0, 1)}{art.creator.lastName.slice(0, 1)}

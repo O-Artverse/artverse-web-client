@@ -212,7 +212,7 @@ export default function ArtworksPage() {
               {/* Image */}
               <div className="relative aspect-video overflow-hidden rounded-t-lg">
                 <Image
-                  src={getArtworkImageUrl(artwork.imageUrl) || ''}
+                  src={artwork.imageUrl || ''}
                   alt={artwork.title}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform"

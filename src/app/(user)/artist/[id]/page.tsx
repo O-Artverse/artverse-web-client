@@ -51,7 +51,7 @@ const Card = React.memo(function Card({ artwork }: { artwork: Artwork }) {
             <Link href={`/explore/${artwork.id}`} className="relative block w-full" style={{ paddingBottom: pb }}>
                 {!loaded && <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-neutral-700" />}
                 <Image
-                    src={getArtworkImageUrl(artwork.imageUrl) || ''}
+                    src={artwork.imageUrl || ''}
                     alt={artwork.title}
                     fill
                     sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 20vw"
