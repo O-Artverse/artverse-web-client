@@ -300,20 +300,20 @@ export default function PaymentPage({ orderId }: PaymentPageProps) {
             <div className="space-y-3 text-sm mb-4">
               <div className="flex justify-between text-gray-600 dark:text-gray-400">
                 <span>Subtotal</span>
-                <span>${order.subtotal.toFixed(2)}</span>
+                <span>${Number(order.subtotal).toFixed(2)}</span>
               </div>
 
-              {order.tax > 0 && (
+              {Number(order.tax) > 0 && (
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Tax</span>
-                  <span>${order.tax.toFixed(2)}</span>
+                  <span>${Number(order.tax).toFixed(2)}</span>
                 </div>
               )}
 
-              {order.shippingFee > 0 && (
+              {Number(order.shippingFee) > 0 && (
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Shipping</span>
-                  <span>${order.shippingFee.toFixed(2)}</span>
+                  <span>${Number(order.shippingFee).toFixed(2)}</span>
                 </div>
               )}
 
@@ -322,7 +322,7 @@ export default function PaymentPage({ orderId }: PaymentPageProps) {
               <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-gray-100">
                 <span>Total</span>
                 <span className="text-purple-600 dark:text-purple-400">
-                  ${order.totalAmount.toFixed(2)}
+                  ${Number(order.totalAmount).toFixed(2)}
                 </span>
               </div>
             </div>

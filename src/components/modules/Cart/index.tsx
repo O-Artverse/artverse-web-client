@@ -149,7 +149,7 @@ export default function CartPage() {
                     className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-neutral-800"
                   >
                     <Image
-                      src={getArtworkImageUrl(item.artwork.imageUrl) || ''}
+                      src={item.artwork.imageUrl || ''}
                       alt={item.artwork.title}
                       fill
                       className="object-cover hover:scale-105 transition-transform duration-300"
@@ -248,20 +248,20 @@ export default function CartPage() {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between text-gray-600 dark:text-gray-400">
                 <span>Subtotal ({cart.totalItems} items)</span>
-                <span>${cart.subtotal.toFixed(2)}</span>
+                <span>${Number(cart.subtotal).toFixed(2)}</span>
               </div>
 
-              {cart.tax > 0 && (
+              {Number(cart.tax) > 0 && (
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Tax</span>
-                  <span>${cart.tax.toFixed(2)}</span>
+                  <span>${Number(cart.tax).toFixed(2)}</span>
                 </div>
               )}
 
-              {cart.shippingFee > 0 && (
+              {Number(cart.shippingFee) > 0 && (
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Shipping</span>
-                  <span>${cart.shippingFee.toFixed(2)}</span>
+                  <span>${Number(cart.shippingFee).toFixed(2)}</span>
                 </div>
               )}
 
@@ -270,7 +270,7 @@ export default function CartPage() {
               <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-gray-100">
                 <span>Total</span>
                 <span className="text-purple-600 dark:text-purple-400">
-                  ${cart.total.toFixed(2)}
+                  ${Number(cart.total).toFixed(2)}
                 </span>
               </div>
             </div>

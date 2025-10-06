@@ -143,7 +143,7 @@ export default function OrderDetailPage({ orderId }: OrderDetailPageProps) {
                     <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-neutral-700">
                       {item.artwork && (
                         <Image
-                          src={getArtworkImageUrl(item.artwork.imageUrl) || ''}
+                          src={item.artwork.imageUrl || ''}
                           alt={item.artwork.title}
                           fill
                           className="object-cover"
@@ -238,20 +238,20 @@ export default function OrderDetailPage({ orderId }: OrderDetailPageProps) {
               <div className="space-y-3 text-sm mb-4">
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Subtotal</span>
-                  <span>${order.subtotal.toFixed(2)}</span>
+                  <span>${Number(order.subtotal).toFixed(2)}</span>
                 </div>
 
-                {order.tax > 0 && (
+                {Number(order.tax) > 0 && (
                   <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Tax</span>
-                    <span>${order.tax.toFixed(2)}</span>
+                    <span>${Number(order.tax).toFixed(2)}</span>
                   </div>
                 )}
 
-                {order.shippingFee > 0 && (
+                {Number(order.shippingFee) > 0 && (
                   <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Shipping</span>
-                    <span>${order.shippingFee.toFixed(2)}</span>
+                    <span>${Number(order.shippingFee).toFixed(2)}</span>
                   </div>
                 )}
 
@@ -260,7 +260,7 @@ export default function OrderDetailPage({ orderId }: OrderDetailPageProps) {
                 <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-gray-100">
                   <span>Total</span>
                   <span className="text-purple-600 dark:text-purple-400">
-                    ${order.totalAmount.toFixed(2)}
+                    ${Number(order.totalAmount).toFixed(2)}
                   </span>
                 </div>
               </div>
