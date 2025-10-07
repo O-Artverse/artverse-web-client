@@ -12,18 +12,28 @@ import {
     Heart,
     PaperPlaneRight,
     ShareFat,
-    Smiley,
     TextB,
     TextItalic,
     TextUnderline,
     ArrowUUpLeft,
     ArrowUUpRight,
     Building,
+    SmileyIcon,
+    CubeIcon,
+    ImageSquare,
+    Play,
+    Pause,
+    ClosedCaptioning,
+    BuildingOfficeIcon,
+    ArrowsOutIcon,
+    MagnifyingGlassMinusIcon,
+    MagnifyingGlassPlusIcon,
 } from '@phosphor-icons/react'
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import artworkService, { type Artwork, type ArtworkComment } from '@/services/artwork.service'
 import { useAppSelector } from '@/store/hooks'
 import { getArtworkImageUrl, getImageUrl } from '@/utils/imageUtils'
+import { SpeakerHighIcon } from '@phosphor-icons/react/dist/ssr'
 
 /* ---------------- helpers ---------------- */
 const fmt = (d: string) => new Date(d).toLocaleString()
@@ -62,6 +72,19 @@ function useTextHistory(initial = '') {
 
 /* ---------- tiny emoji list ---------- */
 const EMOJIS = ['😊', '😍', '😅', '🔥', '👏', '👍', '🎉', '❤️', '😢', '🤔']
+const LANG_OPTIONS = [
+    { code: 'en', label: 'English' },
+    { code: 'vi', label: 'Tiếng Việt' },
+    { code: 'es', label: 'Español' },
+    { code: 'fr', label: 'Français' },
+    { code: 'de', label: 'Deutsch' },
+    { code: 'pt', label: 'Português' },
+    { code: 'it', label: 'Italiano' },
+    { code: 'ru', label: 'Русский' },
+    { code: 'ja', label: '日本語' },
+    { code: 'ko', label: '한국어' },
+    { code: 'zh', label: '中文' },
+]
 
 /* ================= PAGE ================= */
 export default function ArtDetail({ id }: { id: string }) {
@@ -69,6 +92,17 @@ export default function ArtDetail({ id }: { id: string }) {
     const currentUser = useAppSelector((state) => state.auth.user)
     const [imgLoaded, setImgLoaded] = useState(false)
     const [showProtectionMessage, setShowProtectionMessage] = useState(false)
+    const [show2DModal, setShow2DModal] = useState(false)
+    const [isAudioPlaying, setIsAudioPlaying] = useState(false)
+    const [audioTime, setAudioTime] = useState({ current: 0, duration: 0 })
+    const [transcriptLang, setTranscriptLang] = useState<string>('en')
+    const [isModalImageOnly, setIsModalImageOnly] = useState(false)
+    const [showImageOverlay, setShowImageOverlay] = useState(false)
+    const [zoomScale, setZoomScale] = useState(1)
+    const audioRef = useRef<HTMLAudioElement>(null)
+    const imageFsRef = useRef<HTMLDivElement>(null)
+    const speechTimerRef = useRef<number | null>(null)
+    const audioCtxRef = useRef<AudioContext | null>(null)
 
     // Fetch artwork data
     const { data: art, isLoading, error } = useQuery({
@@ -100,8 +134,9 @@ export default function ArtDetail({ id }: { id: string }) {
             }
         },
         getNextPageParam: (lastPage, pages) => {
-            const totalFetched = pages.reduce((sum, page) => sum + page.data.length, 0)
-            return totalFetched < lastPage.total ? totalFetched : undefined
+            // advance by fixed page size to avoid overlap when client-side filters skew counts
+            const nextOffset = pages.length * 12
+            return nextOffset < lastPage.total ? nextOffset : undefined
         },
         enabled: !!art?.categoryId,
         initialPageParam: 0,
@@ -184,8 +219,16 @@ export default function ArtDetail({ id }: { id: string }) {
     const rootInputRef = useRef<HTMLInputElement>(null)
     const emojiRootRef = useRef<HTMLDivElement>(null)
 
-    // Flatten all pages of related artworks
-    const related = relatedData?.pages.flatMap(page => page.data) || []
+    const related = useMemo(() => {
+        const items = relatedData?.pages.flatMap(page => page.data) || []
+        const seen = new Set<string>()
+        return items.filter((a) => {
+            if (a.id === id) return false
+            if (seen.has(a.id)) return false
+            seen.add(a.id)
+            return true
+        })
+    }, [relatedData, id])
 
     // hide emoji when clicking outside (root)
     useEffect(() => {
@@ -235,6 +278,203 @@ export default function ArtDetail({ id }: { id: string }) {
         setTimeout(() => setShowProtectionMessage(false), 3000)
     }
 
+    const getSpeechText = () => {
+        const provided = ((art as any)?.transcripts || {})[transcriptLang]
+        const fallback = (art as any)?.description || (art as any)?.title || ''
+        return provided || fallback
+    }
+
+    const waitForVoices = async () => {
+        if (typeof window === 'undefined' || !('speechSynthesis' in window)) return [] as SpeechSynthesisVoice[]
+        const synth = window.speechSynthesis
+        let voices = synth.getVoices()
+        if (voices && voices.length > 0) return voices
+        await new Promise<void>((resolve) => {
+            const handler = () => { resolve(); synth.removeEventListener('voiceschanged', handler) }
+            synth.addEventListener('voiceschanged', handler)
+            setTimeout(() => { resolve(); synth.removeEventListener('voiceschanged', handler) }, 1500)
+        })
+        return synth.getVoices()
+    }
+
+    const startTTS = async () => {
+        if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+        const text = getSpeechText()
+        if (!text) {
+            console.warn('[tts] no text available; skip speaking')
+            return
+        }
+        const voices = await waitForVoices()
+        const langLower = (transcriptLang || 'en').toLowerCase()
+        const primary = voices.filter(v => v.lang?.toLowerCase().startsWith(langLower))
+        const fallbacks = voices.filter(v => !primary.includes(v))
+        const candidates = [...primary, ...fallbacks]
+        const splitIntoChunks = (input: string) => {
+            const raw = input.replace(/\s+/g, ' ').trim()
+            const sentences = raw.split(/(?<=[\.!?])\s+/)
+            const chunks: string[] = []
+            let buf = ''
+            for (const s of sentences) {
+                if ((buf + ' ' + s).trim().length > 180) {
+                    if (buf) chunks.push(buf.trim())
+                    if (s.length > 180) {
+                        for (let i = 0; i < s.length; i += 170) chunks.push(s.slice(i, i + 170))
+                        buf = ''
+                    } else {
+                        buf = s
+                    }
+                } else {
+                    buf = (buf ? buf + ' ' : '') + s
+                }
+            }
+            if (buf) chunks.push(buf.trim())
+            return chunks
+        }
+
+        const chunks = splitIntoChunks(text)
+        const approxDuration = Math.max(3, Math.min(300, Math.ceil(text.split(/\s+/).length / 2.5)))
+        setAudioTime({ current: 0, duration: approxDuration })
+
+        const speakQueue = (voiceIndex: number) => {
+            const voice = candidates[voiceIndex]
+            let idx = 0
+            const startTs = Date.now()
+            let anyStarted = false
+
+            const speakNext = () => {
+                if (idx >= chunks.length) {
+                    const elapsedMs = Date.now() - startTs
+                    if (speechTimerRef.current) { window.clearInterval(speechTimerRef.current); speechTimerRef.current = null }
+                    setIsAudioPlaying(false)
+                    setAudioTime((t) => ({ ...t, current: 0 }))
+                    if (!anyStarted && voiceIndex + 1 < candidates.length) {
+                        speakQueue(voiceIndex + 1)
+                    } else if (!anyStarted) {
+                    }
+                    return
+                }
+
+                const utter = new SpeechSynthesisUtterance(chunks[idx])
+                utter.lang = transcriptLang || 'en-US'
+                utter.rate = 1
+                utter.pitch = 1
+                if (voice) utter.voice = voice
+                utter.onstart = () => {
+                    anyStarted = true
+                    setIsAudioPlaying(true)
+                    if (speechTimerRef.current) { window.clearInterval(speechTimerRef.current); speechTimerRef.current = null }
+                    speechTimerRef.current = window.setInterval(() => {
+                        const elapsed = (Date.now() - startTs) / 1000
+                        setAudioTime((t) => ({ ...t, current: Math.min(elapsed, approxDuration) }))
+                    }, 500) as unknown as number
+                }
+                utter.onerror = (e: any) => {
+                    const code = e?.error || e?.name
+                    if (code === 'interrupted' || code === 'canceled' || code === 'not-allowed' || code === 'service-not-allowed') {
+                        return
+                    }
+                    console.warn('[tts] error', e)
+                }
+                utter.onend = () => {
+                    idx++
+                    speakNext()
+                }
+                try {
+                    if (window.speechSynthesis.speaking) {
+                        window.speechSynthesis.cancel()
+                    }
+                    window.speechSynthesis.resume()
+                    // also try to resume AudioContext to unlock audio on user gesture
+                    try {
+                        if (!audioCtxRef.current) {
+                            audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
+                        }
+                        if (audioCtxRef.current.state !== 'running') {
+                            audioCtxRef.current.resume()
+                        }
+                    } catch { }
+                } catch { }
+                setTimeout(() => window.speechSynthesis.speak(utter), 50)
+            }
+            speakNext()
+        }
+
+        speakQueue(0)
+    }
+
+    const stopTTS = () => {
+        if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+        window.speechSynthesis.cancel()
+        if (speechTimerRef.current) { window.clearInterval(speechTimerRef.current); speechTimerRef.current = null }
+        setIsAudioPlaying(false)
+    }
+
+    const toggleAudio = async () => {
+        const hasFile = !!(art as any)?.audioUrl;
+        const el = audioRef.current;
+
+        if (hasFile && el) {
+            try {
+                if (el.paused) {
+                    if (el.readyState < 2) {
+                        await new Promise<void>((resolve) => {
+                            const onCanPlay = () => {
+                                el.removeEventListener('canplay', onCanPlay);
+                                resolve();
+                            };
+                            el.addEventListener('canplay', onCanPlay, { once: true });
+                            try { el.load(); } catch { }
+                        });
+                    }
+
+                    const playPromise = el.play();
+                    if (playPromise && typeof playPromise.then === 'function') {
+                        await playPromise;
+                    }
+                    setIsAudioPlaying(true);
+                    setAudioTime(t => ({ ...t, duration: el.duration || t.duration }));
+                } else {
+                    el.pause();
+                    setIsAudioPlaying(false);
+                }
+            } catch (err) {
+                setIsAudioPlaying(false);
+            }
+        } else {
+            if (isAudioPlaying) stopTTS();
+            else startTTS();
+        }
+    };
+
+    const resetAudioState = () => {
+        const el = audioRef.current
+        if (el) {
+            try { el.pause(); el.currentTime = 0; el.muted = false } catch { }
+        }
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+            try { window.speechSynthesis.cancel() } catch { }
+        }
+        if (speechTimerRef.current) { window.clearInterval(speechTimerRef.current); speechTimerRef.current = null }
+        setIsAudioPlaying(false)
+        setAudioTime({ current: 0, duration: el?.duration || 0 })
+    }
+
+    useEffect(() => {
+        if (!show2DModal) {
+            const el = audioRef.current;
+            try { el?.pause(); if (el) el.currentTime = 0 } catch { }
+            if (typeof window !== 'undefined' && 'speechSynthesis' in window) { try { window.speechSynthesis.cancel() } catch { } }
+            setIsAudioPlaying(false);
+            setAudioTime({ current: 0, duration: 0 });
+        }
+    }, [show2DModal])
+
+    const seekAudio = (value: number) => {
+        const el = audioRef.current
+        if (!el) return
+        el.currentTime = value
+        setAudioTime((t) => ({ ...t, current: value, duration: el.duration || t.duration }))
+    }
     const sendRootComment = () => {
         const content = root.value.trim()
         if (isEffectivelyEmpty(content)) return
@@ -285,7 +525,6 @@ export default function ArtDetail({ id }: { id: string }) {
         )
     }
 
-    const ratio = art.height / art.width
     const isLikedByUser = art.likes?.some(like => like.userId) || false
 
     return (
@@ -307,11 +546,18 @@ export default function ArtDetail({ id }: { id: string }) {
                     {/* Left image */}
                     <div className="relative rounded-2xl overflow-hidden bg-gray-100 ring-1 ring-black/5 dark:bg-neutral-900 dark:ring-white/10 flex items-center justify-center min-h-[400px]">
                         {/* zoom button top-left */}
+                        <button
+                            onClick={() => setShow2DModal(true)}
+                            className="absolute right-12 top-4 z-10 rounded-full bg-black/70 text-white p-2 hover:bg-black/80"
+                            title="Open full image"
+                        >
+                            <CubeIcon size={16} />
+                        </button>
                         <a
                             href={getArtworkImageUrl(art.imageUrl) || ''}
                             target="_blank"
                             rel="noreferrer"
-                            className="absolute left-2 top-2 z-10 rounded-full bg-black/70 text-white p-2 hover:bg-black/80"
+                            className="absolute right-4 top-4 z-10 rounded-full bg-black/70 text-white p-2 hover:bg-black/80"
                             title="Open full image"
                         >
                             <ArrowsOutSimple size={16} />
@@ -505,7 +751,7 @@ export default function ArtDetail({ id }: { id: string }) {
                                     <button onClick={() => setUnderline(v => !v)} className={`px-2 py-1 hover:text-black dark:hover:text-white ${underline ? 'underline' : ''}`} title="Underline"><TextUnderline size={16} /></button>
 
                                     <div className="relative" ref={emojiRootRef}>
-                                        <button onClick={() => setShowEmojiRoot(s => !s)} className="px-2 py-1 hover:text-black dark:hover:text-white" title="Emojis"><Smiley size={16} /></button>
+                                        <button onClick={() => setShowEmojiRoot(s => !s)} className="px-2 py-1 hover:text-black dark:hover:text-white" title="Emojis"><SmileyIcon size={16} /></button>
                                         {showEmojiRoot && (
                                             <div className="absolute z-20 mt-2 rounded-xl bg-white shadow-lg ring-1 ring-black/5 p-2 dark:bg-neutral-900 dark:ring-white/10">
                                                 <div className="flex gap-1">
@@ -640,6 +886,169 @@ export default function ArtDetail({ id }: { id: string }) {
                     )}
                 </section>
             </div>
+            {/* 2D Modal */}
+            {show2DModal && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm overflow-y-auto"
+                    onClick={() => {
+                        resetAudioState()
+                        setAudioTime({ current: 0, duration: 0 })
+                        setShow2DModal(false)
+                    }}
+                >
+                    <div className="min-h-full flex items-center justify-center p-4">
+                        <div className="w-full max-w-6xl max-h-[90vh]">
+                            <div className="flex flex-col lg:flex-row h-full">
+                                {/* Left: Image */}
+                                <div ref={imageFsRef} className="w-full lg:w-1/2 flex items-center justify-center p-4 lg:p-6" onClick={(e) => e.stopPropagation()}>
+                                    <div className="w-full h-[50vh] lg:h-full lg:max-h-[70vh] flex items-center justify-center">
+                                        <Image
+                                            src={art.imageUrl || ''}
+                                            alt={art.title}
+                                            width={art.width}
+                                            height={art.height}
+                                            unoptimized
+                                            className="max-w-full max-h-full object-contain"
+                                            style={{ transformOrigin: 'center center' }}
+                                        />
+                                    </div>
+                                </div>
+                                {/* Right: Content */}
+                                <div className="w-full lg:w-1/2 p-4 lg:p-6 text-black dark:text-gray-100 flex flex-col justify-center overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex items-start justify-between gap-[23px] flex-col">
+                                        {/* {art.organization && (
+                                                     <div className="mb-2 inline-flex items-center gap-[12px] text-[16px] font-bold text-gray-600 dark:text-gray-300">
+                                                    <span className="inline-flex items-center p-[6px] dark:bg-white bg-dark rounded-[8px] light:text-white text-black"><BuildingOfficeIcon weight="fill" size={13} /></span>
+                                                    <span className="inline-flex items-center  dark:text-white text-black">{art.organization.name.toUpperCase()}</span>
+                                                </div>
+                                                )} */}
+                                        <div className="inline-flex items-center gap-[12px] text-[16px] font-bold text-gray-600 dark:text-gray-300">
+                                            <span className="inline-flex items-center p-[6px] bg-white bg-dark rounded-[8px] light:text-white text-black"><BuildingOfficeIcon weight="fill" size={13} /></span>
+                                            <span className="inline-flex items-center  text-white ">TATE MODERN</span>
+                                        </div>
+
+                                        <h3 className="text-[16px] font-bold leading-snug text-white">
+                                            {art.title}
+                                        </h3>
+                                    </div>
+                                    <p className="mt-[18px] text-[14px] text-gray-300">{art.description || 'No description available.'}</p>
+
+                                    {/* Audio controls */}
+                                    <div className="mt-4">
+                                        <div className="flex items-center justify-between">
+                                            <button type="button" onClick={toggleAudio} disabled={false} className="inline-flex items-center gap-2 rounded-full text-white disabled:opacity-50">
+                                                <div className={`rounded-full p-[12px] ${isAudioPlaying ? 'text-white bg-[#9C27B0]' : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600'}`}>
+                                                    <SpeakerHighIcon weight='fill' size={16} className={`${isAudioPlaying ? 'text-white' : 'text-gray-800 dark:text-white'}`} />
+                                                </div>
+                                                <span className="text-sm text-white">{isAudioPlaying ? 'Stop Audio' : 'Play audio'}</span>
+                                            </button>
+                                            <button type="button" onClick={() => { setIsModalImageOnly(v => !v), setShowImageOverlay(true) }} className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-white">
+                                                <div className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-full p-[12px]">
+                                                    <ArrowsOutIcon size={16} className='text-gray-800 dark:text-white' />
+                                                </div>
+                                                <span className="text-sm">{isModalImageOnly ? 'Exit Fullscreen' : 'View Fullscreen'}</span>
+                                            </button>
+                                        </div>
+                                        {isAudioPlaying && (
+                                            <>
+                                                <div className="mt-3">
+                                                    <input
+                                                        type="range"
+                                                        min={0}
+                                                        max={Math.max(0, Math.floor(audioTime.duration || (audioRef.current?.duration || 0)))}
+                                                        value={Math.min(Math.floor(audioTime.current), Math.floor(audioTime.duration || (audioRef.current?.duration || 0)) || 0)}
+                                                        step={1}
+                                                        onChange={(e) => seekAudio(Number(e.target.value))}
+                                                        className="w-full accent-primary"
+                                                        disabled={!((art as any)?.audioUrl)}
+                                                    />
+                                                    <div className="mt-1 flex items-center justify-between text-xs text-white">
+                                                        <span>{new Date(audioTime.current * 1000).toISOString().slice(14, 19)}</span>
+                                                        <span>{new Date(audioTime.duration * 1000).toISOString().slice(14, 19)}</span>
+                                                    </div>
+                                                    {(art as any)?.audioUrl && (
+                                                        <audio
+                                                            ref={audioRef}
+                                                            src={(art as any).audioUrl as string}
+                                                            onLoadedMetadata={() => { const a = audioRef.current; if (a) setAudioTime({ current: 0, duration: a.duration || 0 }); }}
+                                                            onTimeUpdate={() => { const a = audioRef.current; if (a) setAudioTime(t => ({ ...t, current: a.currentTime, duration: a.duration || t.duration })); }}
+                                                            onPlay={() => setIsAudioPlaying(true)}
+                                                            onPause={() => setIsAudioPlaying(false)}
+                                                            onEnded={() => { setIsAudioPlaying(false); setAudioTime(t => ({ ...t, current: 0 })); }}
+                                                            onCanPlay={() => { const a = audioRef.current; }}
+                                                            onError={(e) => { const a = e.currentTarget as HTMLAudioElement; console.error('[audio] error', a.error); setIsAudioPlaying(false); }}
+                                                            preload="auto"
+                                                            playsInline
+                                                            className="hidden"
+                                                        />
+                                                    )}
+                                                </div>
+                                                <div className="mt-4">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <ClosedCaptioning size={24} weight='fill' className="text-white" />
+                                                            <span className="text-sm font-medium text-white">TRANSCRIPT</span>
+                                                        </div>
+                                                        <select
+                                                            value={transcriptLang}
+                                                            onChange={(e) => setTranscriptLang(e.target.value)}
+                                                            className="text-sm rounded-md bg-gray-100 dark:bg-neutral-800 px-2 py-1 text-gray-800 dark:text-white"
+                                                        >
+                                                            {LANG_OPTIONS.map(l => (
+                                                                <option key={l.code} value={l.code}>{l.label}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                    <div className="mt-2 space-y-2">
+                                                        {Object.keys(((art as any).transcripts || {})).length > 0 && ((art as any).transcripts || {})[transcriptLang] ? (
+                                                            <div className="rounded-lg bg-gray-100 dark:bg-neutral-800 p-3 text-sm leading-relaxed text-gray-800 dark:text-white">{((art as any).transcripts || {})[transcriptLang]}</div>
+                                                        ) : (
+                                                            <div className="rounded-lg bg-gray-100 dark:bg-neutral-800 p-3 text-sm text-gray-600 dark:text-gray-300">Transcription is unavailable on this artwork</div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {showImageOverlay && (
+                <div className="fixed inset-0 z-50 bg-black/80" onClick={() => setShowImageOverlay(false)}>
+                    <div className="w-full h-full flex items-center justify-center p-4">
+                        <div className="relative w-[90vw] h-[90vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                            <div className="absolute top-4 right-4 flex gap-2 z-[60]">
+                                <button onClick={() => setZoomScale(s => Math.max(0.25, +(s - 0.25).toFixed(2)))} className="rounded-lg bg-black/70 text-white p-3 hover:bg-black/80">
+                                    <MagnifyingGlassMinusIcon size={16} />
+                                </button>
+                                <button onClick={() => setZoomScale(s => Math.min(5, +(s + 0.25).toFixed(2)))} className="rounded-lg bg-black/70 text-white p-3 hover:bg-black/80">
+                                    <MagnifyingGlassPlusIcon size={16} />
+                                </button>
+                            </div>
+                            <div className="w-full h-full flex items-center justify-center">
+                                <Image
+                                    src={art.imageUrl || ''}
+                                    alt={art.title}
+                                    width={art.width}
+                                    height={art.height}
+                                    unoptimized
+                                    className="max-w-full max-h-full object-contain"
+                                    style={{
+                                        transform: `scale(${zoomScale})`,
+                                        transformOrigin: 'center center',
+                                        maxWidth: '100%',
+                                        maxHeight: '100%'
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
@@ -874,7 +1283,7 @@ function CommentItem({
                                 <button onClick={() => setU(v => !v)} className={`px-2 py-1 hover:text-black dark:hover:text-white ${u ? 'underline' : ''}`} title="Underline"><TextUnderline size={16} /></button>
 
                                 <div className="relative">
-                                    <button onClick={() => setShowEmo(s => !s)} className="px-2 py-1 hover:text-black dark:hover:text-white" title="Emojis"><Smiley size={16} /></button>
+                                    <button onClick={() => setShowEmo(s => !s)} className="px-2 py-1 hover:text-black dark:hover:text-white" title="Emojis"><SmileyIcon size={16} /></button>
                                     {showEmo && (
                                         <div className="absolute z-20 mt-2 rounded-xl bg-white shadow-lg ring-1 ring-black/5 p-2 dark:bg-neutral-900 dark:ring-white/10">
                                             <div className="flex gap-1">
