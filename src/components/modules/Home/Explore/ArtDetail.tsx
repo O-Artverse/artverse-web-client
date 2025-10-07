@@ -34,6 +34,7 @@ import artworkService, { type Artwork, type ArtworkComment } from '@/services/ar
 import { useAppSelector } from '@/store/hooks'
 import { getArtworkImageUrl, getImageUrl } from '@/utils/imageUtils'
 import { SpeakerHighIcon } from '@phosphor-icons/react/dist/ssr'
+import { useAddToCart } from '@/hooks/mutations/cart.mutation'
 
 /* ---------------- helpers ---------------- */
 const fmt = (d: string) => new Date(d).toLocaleString()
@@ -103,6 +104,7 @@ export default function ArtDetail({ id }: { id: string }) {
     const imageFsRef = useRef<HTMLDivElement>(null)
     const speechTimerRef = useRef<number | null>(null)
     const audioCtxRef = useRef<AudioContext | null>(null)
+    const addToCart = useAddToCart()
 
     // Fetch artwork data
     const { data: art, isLoading, error } = useQuery({
@@ -697,11 +699,20 @@ export default function ArtDetail({ id }: { id: string }) {
 
                         {/* prices */}
                         {art.price && (
-                            <div className="flex flex-wrap gap-3 mb-5">
-                                <div className="gap-2 items-center rounded-xl flex px-3 py-2 text-[12px] bg-[#eeee] dark:bg-neutral-800">
+                            <div className="flex flex-col gap-3 mb-5">
+                                <div className="gap-2 items-center rounded-xl flex px-3 py-2 text-[12px] bg-[#eeee] dark:bg-neutral-800 w-fit">
                                     <span className="text-[14px] font-bold text-[#9C27B0]/80">Price</span>
                                     <span className="text-[14px] font-bold text-[#9C27B0]/80">${art.price}</span>
                                 </div>
+                                {currentUser && (
+                                    <button
+                                        onClick={() => addToCart.mutate({ artworkId: art.id, quantity: 1 })}
+                                        disabled={addToCart.isPending}
+                                        className="rounded-xl px-4 py-2.5 text-sm font-semibold bg-[#9C27B0] text-white hover:bg-[#9C27B0]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        {addToCart.isPending ? 'Adding...' : 'Add to Cart'}
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
