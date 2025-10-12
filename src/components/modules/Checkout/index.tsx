@@ -200,7 +200,7 @@ export default function CheckoutPage() {
                   >
                     <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-neutral-700">
                       <Image
-                        src={item.artwork.imageUrl || ''}
+                        src={getArtworkImageUrl(item.artwork.imageUrl) || ''}
                         alt={item.artwork.title}
                         fill
                         className="object-cover"

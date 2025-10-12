@@ -149,7 +149,7 @@ export default function CartPage() {
                     className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-neutral-800"
                   >
                     <Image
-                      src={item.artwork.imageUrl || ''}
+                      src={getArtworkImageUrl(item.artwork.imageUrl) || ''}
                       alt={item.artwork.title}
                       fill
                       className="object-cover hover:scale-105 transition-transform duration-300"

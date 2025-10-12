@@ -576,7 +576,7 @@ export default function ArtDetail({ id }: { id: string }) {
                             onDragStart={(e) => e.preventDefault()}
                         >
                             <Image
-                                src={art.imageUrl || ''}
+                                src={getArtworkImageUrl(art.imageUrl) || ''}
                                 alt={art.title}
                                 width={art.width}
                                 height={art.height}
@@ -842,7 +842,7 @@ export default function ArtDetail({ id }: { id: string }) {
                                         >
                                             <div className="relative w-full" style={{ paddingBottom: `${Math.min(artRatio * 100, 150)}%` }}>
                                                 <Image
-                                                    src={r.imageUrl || ''}
+                                                    src={getArtworkImageUrl(r.imageUrl) || ''}
                                                     alt={r.title}
                                                     fill
                                                     className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -914,7 +914,7 @@ export default function ArtDetail({ id }: { id: string }) {
                                 <div ref={imageFsRef} className="w-full lg:w-1/2 flex items-center justify-center p-4 lg:p-6" onClick={(e) => e.stopPropagation()}>
                                     <div className="w-full h-[50vh] lg:h-full lg:max-h-[70vh] flex items-center justify-center">
                                         <Image
-                                            src={art.imageUrl || ''}
+                                            src={getArtworkImageUrl(art.imageUrl) || ''}
                                             alt={art.title}
                                             width={art.width}
                                             height={art.height}
@@ -1042,7 +1042,7 @@ export default function ArtDetail({ id }: { id: string }) {
                             </div>
                             <div className="w-full h-full flex items-center justify-center">
                                 <Image
-                                    src={art.imageUrl || ''}
+                                    src={getArtworkImageUrl(art.imageUrl) || ''}
                                     alt={art.title}
                                     width={art.width}
                                     height={art.height}

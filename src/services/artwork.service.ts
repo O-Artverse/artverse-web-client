@@ -153,6 +153,19 @@ export interface SearchResult {
 }
 
 const artworkService = {
+  // Upload artwork image
+  async uploadImage(file: File): Promise<{ url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await axiosClient.post('/artworks/upload-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
   // Get all artworks with filters
   async getArtworks(params?: {
     search?: string;

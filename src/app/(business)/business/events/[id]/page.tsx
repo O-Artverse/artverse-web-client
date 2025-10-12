@@ -28,6 +28,7 @@ import Image from 'next/image';
 import { useEvent, useDeleteEvent, useRegisterEvent, useUnregisterEvent } from '@/hooks/queries/useEvents';
 import { useAppSelector } from '@/store/hooks';
 import { RootState } from '@/store';
+import { getEventBannerUrl } from '@/utils/imageUtils';
 
 export default function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -152,7 +153,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
               <div className="relative aspect-video overflow-hidden rounded-lg">
                 {event.bannerImage ? (
                   <Image
-                    src={event.bannerImage}
+                    src={getEventBannerUrl(event.bannerImage) || ''}
                     alt={event.title}
                     fill
                     className="object-cover"

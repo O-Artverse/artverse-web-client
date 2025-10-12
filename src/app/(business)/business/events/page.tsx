@@ -34,6 +34,7 @@ import { useEvents, useDeleteEvent } from '@/hooks/queries/useEvents';
 import { Event } from '@/services/event.service';
 import { useAppSelector } from '@/store/hooks';
 import { RootState } from '@/store';
+import { getEventBannerUrl } from '@/utils/imageUtils';
 
 export default function EventsPage() {
   const { user } = useAppSelector((state: RootState) => state.auth);
@@ -253,7 +254,7 @@ export default function EventsPage() {
                 <div className="relative aspect-video overflow-hidden rounded-t-lg">
                   {event.bannerImage ? (
                     <Image
-                      src={event.bannerImage}
+                      src={getEventBannerUrl(event.bannerImage) || ''}
                       alt={event.title}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform"

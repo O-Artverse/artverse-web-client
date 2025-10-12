@@ -414,7 +414,7 @@ function UserCollections() {
         {albums.map((album) => {
           const artworkCount = album._count?.artworks || 0;
           const coverImage = getArtworkImageUrl(album.coverImage || album.artworks?.[0]?.artwork.imageUrl);
-          const previewImages = album.artworks?.slice(0, 4).map(a => a.artwork.imageUrl).filter(Boolean) as string[] || [];
+          const previewImages = album.artworks?.slice(0, 4).map(a => getArtworkImageUrl(a.artwork.imageUrl)).filter(Boolean) as string[] || [];
 
           return (
             <Link key={album.id} href={`/albums/${album.id}`}>

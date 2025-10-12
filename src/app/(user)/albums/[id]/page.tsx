@@ -124,7 +124,7 @@ export default function AlbumDetailPage() {
                     style={{ paddingBottom: pb }}
                   >
                     <Image
-                      src={artwork.imageUrl || ''}
+                      src={getArtworkImageUrl(artwork.imageUrl) || ''}
                       alt={artwork.title}
                       fill
                       sizes="(max-width:640px) 50vw, (max-width:1024px) 33vw, 20vw"

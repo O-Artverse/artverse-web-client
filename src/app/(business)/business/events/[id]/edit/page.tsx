@@ -191,9 +191,8 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         toast.loading(`Uploading banner (${compressedSize}MB)...`, { id: 'upload-banner' });
         const response = await eventService.uploadBanner(compressedFile);
 
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
-        const fullUrl = `${apiBaseUrl}${response.url}`;
-        setBannerUrl(fullUrl);
+        // Use the path returned from backend
+        setBannerUrl(response.url);
         toast.success(`Banner uploaded! (${originalSize}MB → ${compressedSize}MB)`, { id: 'upload-banner' });
       } catch (error: any) {
         console.error('Error uploading banner:', error);

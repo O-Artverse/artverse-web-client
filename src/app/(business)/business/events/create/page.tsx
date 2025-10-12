@@ -155,10 +155,8 @@ export default function CreateEventPage() {
         const { default: eventService } = await import('@/services/event.service');
         const response = await eventService.uploadBanner(compressedFile);
 
-        // Get full URL with API base
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
-        const fullUrl = `${apiBaseUrl}${response.url}`;
-        setBannerUrl(fullUrl);
+        // Use the path returned from backend
+        setBannerUrl(response.url);
 
         toast.success(`Banner uploaded! (${originalSize}MB → ${compressedSize}MB)`, { id: 'upload-banner' });
       } catch (error: any) {

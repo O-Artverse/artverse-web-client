@@ -91,7 +91,7 @@ export default function AlbumsPage() {
                   <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-200 dark:bg-neutral-800 mb-3">
                     {coverImage ? (
                       <Image
-                        src={coverImage}
+                        src={getArtworkImageUrl(coverImage) || ''}
                         alt={album.name}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-300"

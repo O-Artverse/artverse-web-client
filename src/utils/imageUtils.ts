@@ -8,8 +8,8 @@ import { API_BASE_URL } from '@/constants/env';
 export const getImageUrl = (imagePath: string | null | undefined): string | null => {
   if (!imagePath) return null;
 
-  // If imagePath is already a full URL (starts with http), return as is
-  if (imagePath.startsWith('http')) {
+  // If imagePath is already a full URL (starts with http or data:), return as is
+  if (imagePath.startsWith('http') || imagePath.startsWith('data:')) {
     return imagePath;
   }
 

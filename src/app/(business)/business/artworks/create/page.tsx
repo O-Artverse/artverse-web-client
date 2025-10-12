@@ -27,6 +27,7 @@ import { useCreateArtwork } from '@/hooks/mutations/artwork.mutation';
 import { toast } from 'react-hot-toast';
 import { useAppSelector } from '@/store/hooks';
 import axiosClient from '@/configs/axios-client';
+import artworkService from '@/services/artwork.service';
 
 export default function CreateArtworkPage() {
   const router = useRouter();
@@ -202,18 +203,16 @@ export default function CreateArtworkPage() {
     }
 
     try {
-      // For now, we'll use a placeholder image URL
-      // In production, you would upload the file first to a storage service (S3, Cloudinary, etc.)
-      // and get the URL back before creating the artwork
+      // Upload image to server
+      toast.loading('Uploading image...');
+      const uploadResult = await artworkService.uploadImage(selectedFile);
+      toast.dismiss();
 
-      // Get image dimensions
+      // Get image dimensions from preview
       const img = document.createElement('img');
-      const imageUrl = await new Promise<{url: string, width: number, height: number}>((resolve) => {
+      const imageDimensions = await new Promise<{width: number, height: number}>((resolve) => {
         img.onload = () => {
-          // In production, upload selectedFile here and get URL
-          // For now, use placeholder
           resolve({
-            url: imagePreview || 'https://via.placeholder.com/800x600',
             width: img.naturalWidth,
             height: img.naturalHeight
           });
@@ -224,9 +223,9 @@ export default function CreateArtworkPage() {
       const artworkData = {
         title: formData.title,
         description: formData.description || undefined,
-        imageUrl: imageUrl.url,
-        width: imageUrl.width,
-        height: imageUrl.height,
+        imageUrl: uploadResult.url,
+        width: imageDimensions.width,
+        height: imageDimensions.height,
         categoryId: formData.categoryId,
         medium: formData.medium || undefined,
         dimensions: formData.dimensions || undefined,
@@ -242,6 +241,7 @@ export default function CreateArtworkPage() {
       toast.success(isDraft ? 'Artwork saved as draft' : 'Artwork published successfully');
       router.push('/business/artworks');
     } catch (error: any) {
+      toast.dismiss();
       toast.error(error.message || 'Failed to create artwork');
     }
   };

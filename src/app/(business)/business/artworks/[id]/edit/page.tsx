@@ -27,6 +27,7 @@ import { toast } from 'react-hot-toast';
 import { useAppSelector } from '@/store/hooks';
 import axiosClient from '@/configs/axios-client';
 import { getArtworkImageUrl } from '@/utils/imageUtils';
+import artworkService from '@/services/artwork.service';
 
 export default function EditArtworkPage() {
   const router = useRouter();
@@ -210,19 +211,6 @@ export default function EditArtworkPage() {
     }));
   };
 
-  const uploadImage = async (file: File): Promise<string> => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const response = await axiosClient.post('/artworks/upload-image', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-
-    return response.data.url;
-  };
-
   const handleSubmit = async (isDraft = false) => {
     if (!formData.title || !formData.categoryId) {
       toast.error('Please fill in required fields');
@@ -238,8 +226,10 @@ export default function EditArtworkPage() {
 
       // Upload new image if selected
       if (selectedFile) {
-        const uploadedUrl = await uploadImage(selectedFile);
-        imageUrl = uploadedUrl;
+        toast.loading('Uploading image...');
+        const uploadResult = await artworkService.uploadImage(selectedFile);
+        toast.dismiss();
+        imageUrl = uploadResult.url;
 
         // Get new image dimensions
         const img = document.createElement('img');
@@ -273,6 +263,7 @@ export default function EditArtworkPage() {
       toast.success(isDraft ? 'Artwork saved as draft' : 'Artwork updated successfully');
       router.push('/business/artworks');
     } catch (error: any) {
+      toast.dismiss();
       toast.error(error.message || 'Failed to update artwork');
     } finally {
       setIsUploading(false);

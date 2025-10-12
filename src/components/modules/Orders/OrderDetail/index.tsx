@@ -143,7 +143,7 @@ export default function OrderDetailPage({ orderId }: OrderDetailPageProps) {
                     <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-neutral-700">
                       {item.artwork && (
                         <Image
-                          src={item.artwork.imageUrl || ''}
+                          src={getArtworkImageUrl(item.artwork.imageUrl) || ''}
                           alt={item.artwork.title}
                           fill
                           className="object-cover"
