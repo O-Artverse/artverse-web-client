@@ -91,7 +91,6 @@ export interface OrderListResponse {
 export enum PaymentMethod {
   STRIPE = 'STRIPE',
   BANK_TRANSFER = 'BANK_TRANSFER',
-  PAYOS = 'PAYOS',
   COD = 'COD',
 }
 
@@ -107,9 +106,6 @@ export interface Payment {
   stripeClientSecret?: string;
   stripeCustomerId?: string;
   stripeChargeId?: string;
-  // PayOS specific fields
-  payosOrderCode?: string;
-  payosTransactionId?: string;
   // Bank transfer fields
   bankCode?: string;
   bankAccount?: string;

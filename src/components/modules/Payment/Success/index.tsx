@@ -74,7 +74,9 @@ export default function PaymentSuccessPage() {
                 <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-neutral-800 rounded-lg">
                   <span className="text-gray-600 dark:text-gray-400">Payment Method</span>
                   <span className="font-semibold text-gray-900 dark:text-gray-100">
-                    {payment.paymentMethod === 'PAYOS' ? 'PayOS' : 'Bank Transfer'}
+                    {payment.paymentMethod === 'STRIPE' ? 'Credit Card (Stripe)' :
+                     payment.paymentMethod === 'BANK_TRANSFER' ? 'Bank Transfer' :
+                     payment.paymentMethod}
                   </span>
                 </div>
 
@@ -85,11 +87,11 @@ export default function PaymentSuccessPage() {
                   </span>
                 </div>
 
-                {payment.payosOrderCode && (
+                {payment.stripePaymentIntentId && (
                   <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-neutral-800 rounded-lg">
-                    <span className="text-gray-600 dark:text-gray-400">Transaction Code</span>
-                    <span className="font-mono font-semibold text-gray-900 dark:text-gray-100">
-                      {payment.payosOrderCode}
+                    <span className="text-gray-600 dark:text-gray-400">Transaction ID</span>
+                    <span className="font-mono text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      {payment.stripePaymentIntentId}
                     </span>
                   </div>
                 )}
