@@ -41,6 +41,14 @@ class PaymentService {
     return response.data;
   }
 
+  // Get payment by order code (for PayOS)
+  async getPaymentByOrderCode(orderCode: string): Promise<Payment> {
+    const response = await axiosClient.get<Payment>(
+      `${this.BASE_URL}/order-code/${orderCode}`,
+    );
+    return response.data;
+  }
+
   // Cancel payment
   async cancelPayment(paymentId: string): Promise<{ message: string }> {
     const response = await axiosClient.delete<{ message: string }>(
