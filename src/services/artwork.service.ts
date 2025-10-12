@@ -12,6 +12,16 @@ export interface ArtworkCategory {
   };
 }
 
+export interface AudioSubtitle {
+  id: string;
+  language: string;
+  label: string;
+  vttUrl: string;
+  artworkId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Artwork {
   id: string;
   title: string;
@@ -30,6 +40,9 @@ export interface Artwork {
   dimensions?: string;
   year?: number;
   tags: string[];
+  backgroundMusicUrl?: string;
+  descriptionAudioUrl?: string;
+  audioSubtitles?: AudioSubtitle[];
   creatorId: string;
   creator: {
     id: string;
@@ -79,6 +92,8 @@ export interface CreateArtworkDto {
   dimensions?: string;
   year?: number;
   tags?: string[];
+  backgroundMusicUrl?: string;
+  descriptionAudioUrl?: string;
 }
 
 export interface UpdateArtworkDto {
@@ -96,6 +111,14 @@ export interface UpdateArtworkDto {
   year?: number;
   tags?: string[];
   status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  backgroundMusicUrl?: string;
+  descriptionAudioUrl?: string;
+}
+
+export interface AudioSubtitleDto {
+  language: string;
+  label: string;
+  vttUrl: string;
 }
 
 export interface ArtworkComment {
@@ -276,6 +299,54 @@ const artworkService = {
   // Get search suggestions for autocomplete
   async getSearchSuggestions(params?: { q?: string; limit?: number }): Promise<SearchSuggestion[]> {
     const response = await axiosClient.get('/artworks/search/suggestions', { params });
+    return response.data;
+  },
+
+  // ========== AUDIO FILES ==========
+
+  // Upload audio file (music or description)
+  async uploadAudio(file: File): Promise<{ url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await axiosClient.post('/artworks/upload-audio', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  // Upload VTT subtitle file
+  async uploadVtt(file: File): Promise<{ url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await axiosClient.post('/artworks/upload-vtt', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  // ========== AUDIO SUBTITLES ==========
+
+  // Get all subtitles for an artwork
+  async getSubtitles(artworkId: string): Promise<AudioSubtitle[]> {
+    const response = await axiosClient.get(`/artworks/${artworkId}/subtitles`);
+    return response.data;
+  },
+
+  // Add or update subtitle for artwork
+  async upsertSubtitle(artworkId: string, data: AudioSubtitleDto): Promise<AudioSubtitle> {
+    const response = await axiosClient.post(`/artworks/${artworkId}/subtitles`, data);
+    return response.data;
+  },
+
+  // Delete subtitle
+  async deleteSubtitle(artworkId: string, language: string): Promise<{ message: string }> {
+    const response = await axiosClient.delete(`/artworks/${artworkId}/subtitles/${language}`);
     return response.data;
   },
 };

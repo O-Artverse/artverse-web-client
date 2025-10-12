@@ -57,6 +57,11 @@ export default function CreateArtworkPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+  // Audio states
+  const [backgroundMusicFile, setBackgroundMusicFile] = useState<File | null>(null);
+  const [descriptionAudioFile, setDescriptionAudioFile] = useState<File | null>(null);
+  const [uploadingAudio, setUploadingAudio] = useState(false);
+
   // Fetch categories from API
   const { data: categories, isLoading: categoriesLoading } = useArtworkCategories();
 
@@ -208,6 +213,24 @@ export default function CreateArtworkPage() {
       const uploadResult = await artworkService.uploadImage(selectedFile);
       toast.dismiss();
 
+      // Upload audio files if present
+      let backgroundMusicUrl: string | undefined;
+      let descriptionAudioUrl: string | undefined;
+
+      if (backgroundMusicFile) {
+        toast.loading('Uploading background music...');
+        const musicUpload = await artworkService.uploadAudio(backgroundMusicFile);
+        backgroundMusicUrl = musicUpload.url;
+        toast.dismiss();
+      }
+
+      if (descriptionAudioFile) {
+        toast.loading('Uploading description audio...');
+        const audioUpload = await artworkService.uploadAudio(descriptionAudioFile);
+        descriptionAudioUrl = audioUpload.url;
+        toast.dismiss();
+      }
+
       // Get image dimensions from preview
       const img = document.createElement('img');
       const imageDimensions = await new Promise<{width: number, height: number}>((resolve) => {
@@ -233,6 +256,8 @@ export default function CreateArtworkPage() {
         price: formData.price ? Number(formData.price) : undefined,
         tags: formData.tags,
         status: isDraft ? ('DRAFT' as const) : ('PUBLISHED' as const),
+        backgroundMusicUrl,
+        descriptionAudioUrl,
         // Add organizationId from form if selected
         ...(formData.organizationId ? { organizationId: formData.organizationId } : {})
       };
@@ -464,6 +489,92 @@ export default function CreateArtworkPage() {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Audio Files Section */}
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-purple-50/30 dark:bg-purple-900/10">
+              <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+                Audio Files (Optional)
+              </h4>
+              <div className="space-y-4">
+                {/* Background Music */}
+                <div className="space-y-2">
+                  <label className="text-xs text-gray-600 dark:text-gray-400">
+                    Background Music
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      accept="audio/*"
+                      onChange={(e) => setBackgroundMusicFile(e.target.files?.[0] || null)}
+                      className="hidden"
+                      id="background-music-upload"
+                    />
+                    <label
+                      htmlFor="background-music-upload"
+                      className="flex-1 cursor-pointer flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary dark:hover:border-primary-400 transition-colors bg-white dark:bg-gray-800/20"
+                    >
+                      <Upload size={16} className="text-gray-400 dark:text-gray-500" />
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {backgroundMusicFile ? backgroundMusicFile.name : 'Upload background music'}
+                      </span>
+                    </label>
+                    {backgroundMusicFile && (
+                      <Button
+                        size="sm"
+                        color="danger"
+                        variant="flat"
+                        isIconOnly
+                        onPress={() => setBackgroundMusicFile(null)}
+                      >
+                        <X size={16} />
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Music will auto-play when users view artwork details
+                  </p>
+                </div>
+
+                {/* Description Audio */}
+                <div className="space-y-2">
+                  <label className="text-xs text-gray-600 dark:text-gray-400">
+                    Audio Description/Narration
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      accept="audio/*"
+                      onChange={(e) => setDescriptionAudioFile(e.target.files?.[0] || null)}
+                      className="hidden"
+                      id="description-audio-upload"
+                    />
+                    <label
+                      htmlFor="description-audio-upload"
+                      className="flex-1 cursor-pointer flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-primary dark:hover:border-primary-400 transition-colors bg-white dark:bg-gray-800/20"
+                    >
+                      <Upload size={16} className="text-gray-400 dark:text-gray-500" />
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {descriptionAudioFile ? descriptionAudioFile.name : 'Upload audio description'}
+                      </span>
+                    </label>
+                    {descriptionAudioFile && (
+                      <Button
+                        size="sm"
+                        color="danger"
+                        variant="flat"
+                        isIconOnly
+                        onPress={() => setDescriptionAudioFile(null)}
+                      >
+                        <X size={16} />
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Audio narration explaining the artwork (VTT subtitles can be added after creation)
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Actions */}

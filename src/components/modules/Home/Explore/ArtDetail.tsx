@@ -32,7 +32,7 @@ import {
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import artworkService, { type Artwork, type ArtworkComment } from '@/services/artwork.service'
 import { useAppSelector } from '@/store/hooks'
-import { getArtworkImageUrl, getImageUrl } from '@/utils/imageUtils'
+import { getArtworkImageUrl, getImageUrl, getAudioUrl, getVttUrl } from '@/utils/imageUtils'
 import { SpeakerHighIcon } from '@phosphor-icons/react/dist/ssr'
 import { useAddToCart } from '@/hooks/mutations/cart.mutation'
 
@@ -100,7 +100,18 @@ export default function ArtDetail({ id }: { id: string }) {
     const [isModalImageOnly, setIsModalImageOnly] = useState(false)
     const [showImageOverlay, setShowImageOverlay] = useState(false)
     const [zoomScale, setZoomScale] = useState(1)
-    const audioRef = useRef<HTMLAudioElement>(null)
+
+    // Separate state for background music
+    const [isBgMusicPlaying, setIsBgMusicPlaying] = useState(false)
+
+    // State for VTT subtitle
+    const [currentSubtitle, setCurrentSubtitle] = useState<string>('')
+    const [vttCues, setVttCues] = useState<Array<{start: number, end: number, text: string}>>([])
+
+    // Separate refs for each audio type
+    const audioRef = useRef<HTMLAudioElement>(null) // For description audio
+    const bgMusicRef = useRef<HTMLAudioElement>(null) // For background music
+
     const imageFsRef = useRef<HTMLDivElement>(null)
     const speechTimerRef = useRef<number | null>(null)
     const audioCtxRef = useRef<AudioContext | null>(null)
@@ -112,6 +123,22 @@ export default function ArtDetail({ id }: { id: string }) {
         queryFn: () => artworkService.getArtworkById(id),
         staleTime: 1000 * 60 * 5, // 5 minutes
     })
+
+    // Debug logging for audio data
+    useEffect(() => {
+        if (art) {
+            console.log('[ArtDetail] Artwork loaded:', {
+                id: art.id,
+                title: art.title,
+                backgroundMusicUrl: (art as any).backgroundMusicUrl,
+                descriptionAudioUrl: (art as any).descriptionAudioUrl,
+                audioSubtitles: (art as any).audioSubtitles,
+                hasBackgroundMusic: !!( art as any).backgroundMusicUrl,
+                hasDescriptionAudio: !!(art as any).descriptionAudioUrl,
+                oldAudioUrl: (art as any).audioUrl, // Check if old field exists
+            });
+        }
+    }, [art])
 
     // Fetch related artworks with infinite scroll
     const {
@@ -286,6 +313,110 @@ export default function ArtDetail({ id }: { id: string }) {
         return provided || fallback
     }
 
+    // Parse VTT file content
+    const parseVTT = (vttContent: string) => {
+        const cues: Array<{start: number, end: number, text: string}> = []
+        const lines = vttContent.split('\n')
+        let i = 0
+
+        // Skip WEBVTT header
+        while (i < lines.length && !lines[i].includes('-->')) {
+            i++
+        }
+
+        while (i < lines.length) {
+            const line = lines[i].trim()
+
+            if (line.includes('-->')) {
+                const [startStr, endStr] = line.split('-->').map(s => s.trim())
+                const start = parseVTTTimestamp(startStr)
+                const end = parseVTTTimestamp(endStr)
+
+                i++
+                let text = ''
+                while (i < lines.length && lines[i].trim() !== '') {
+                    if (text) text += '\n'
+                    text += lines[i].trim()
+                    i++
+                }
+
+                if (text) {
+                    cues.push({ start, end, text })
+                }
+            }
+            i++
+        }
+
+        return cues
+    }
+
+    // Parse VTT timestamp (HH:MM:SS.mmm or MM:SS.mmm)
+    const parseVTTTimestamp = (timestamp: string): number => {
+        const parts = timestamp.split(':')
+        let hours = 0, minutes = 0, seconds = 0
+
+        if (parts.length === 3) {
+            hours = parseInt(parts[0])
+            minutes = parseInt(parts[1])
+            seconds = parseFloat(parts[2])
+        } else if (parts.length === 2) {
+            minutes = parseInt(parts[0])
+            seconds = parseFloat(parts[1])
+        }
+
+        return hours * 3600 + minutes * 60 + seconds
+    }
+
+    // Load VTT file for selected language
+    useEffect(() => {
+        const loadVTT = async () => {
+            const subtitles = (art as any)?.audioSubtitles || []
+            const subtitle = subtitles.find((s: any) => s.language === transcriptLang)
+
+            if (subtitle && subtitle.vttUrl) {
+                try {
+                    const vttUrl = getVttUrl(subtitle.vttUrl)
+                    if (!vttUrl) {
+                        console.error('[VTT] Invalid VTT URL')
+                        setVttCues([])
+                        return
+                    }
+                    console.log('[VTT] Loading subtitle file:', vttUrl)
+                    const response = await fetch(vttUrl)
+                    const vttContent = await response.text()
+                    console.log('[VTT] Loaded content length:', vttContent.length)
+                    const cues = parseVTT(vttContent)
+                    console.log('[VTT] Parsed cues:', cues.length)
+                    setVttCues(cues)
+                } catch (error) {
+                    console.error('[VTT] Failed to load subtitle:', error)
+                    setVttCues([])
+                }
+            } else {
+                setVttCues([])
+            }
+        }
+
+        if (art && transcriptLang) {
+            loadVTT()
+        }
+    }, [art, transcriptLang])
+
+    // Update current subtitle based on audio time
+    useEffect(() => {
+        if (vttCues.length === 0 || !isAudioPlaying) {
+            setCurrentSubtitle('')
+            return
+        }
+
+        const currentTime = audioTime.current
+        const activeCue = vttCues.find(cue =>
+            currentTime >= cue.start && currentTime <= cue.end
+        )
+
+        setCurrentSubtitle(activeCue?.text || '')
+    }, [audioTime.current, vttCues, isAudioPlaying])
+
     const waitForVoices = async () => {
         if (typeof window === 'undefined' || !('speechSynthesis' in window)) return [] as SpeechSynthesisVoice[]
         const synth = window.speechSynthesis
@@ -411,13 +542,24 @@ export default function ArtDetail({ id }: { id: string }) {
         setIsAudioPlaying(false)
     }
 
+    // Toggle description audio (with timeline controls)
     const toggleAudio = async () => {
-        const hasFile = !!(art as any)?.audioUrl;
+        const descAudioUrl = getAudioUrl((art as any)?.descriptionAudioUrl);
         const el = audioRef.current;
 
-        if (hasFile && el) {
+        console.log('[toggleAudio] 🎙️ DESCRIPTION AUDIO - Called with:', {
+            rawDescriptionUrl: (art as any)?.descriptionAudioUrl,
+            processedDescAudioUrl: descAudioUrl,
+            hasAudioElement: !!el,
+            audioRefSrc: el?.src,
+            audioReadyState: el?.readyState,
+            isPlaying: !el?.paused,
+        });
+
+        if (descAudioUrl && el) {
             try {
                 if (el.paused) {
+                    console.log('[toggleAudio] Attempting to play description audio');
                     if (el.readyState < 2) {
                         await new Promise<void>((resolve) => {
                             const onCanPlay = () => {
@@ -433,18 +575,57 @@ export default function ArtDetail({ id }: { id: string }) {
                     if (playPromise && typeof playPromise.then === 'function') {
                         await playPromise;
                     }
+                    console.log('[toggleAudio] Description audio playing successfully');
                     setIsAudioPlaying(true);
                     setAudioTime(t => ({ ...t, duration: el.duration || t.duration }));
                 } else {
+                    console.log('[toggleAudio] Pausing description audio');
                     el.pause();
                     setIsAudioPlaying(false);
                 }
             } catch (err) {
+                console.error('[toggleAudio] Error playing description audio:', err);
                 setIsAudioPlaying(false);
             }
         } else {
+            console.log('[toggleAudio] No description audio file, using TTS');
             if (isAudioPlaying) stopTTS();
             else startTTS();
+        }
+    };
+
+    // Toggle background music (auto-loop, no timeline)
+    const toggleBgMusic = async () => {
+        const bgUrl = getAudioUrl((art as any)?.backgroundMusicUrl);
+        const bgEl = bgMusicRef.current;
+
+        console.log('[toggleBgMusic] 🎵 BACKGROUND MUSIC - Called with:', {
+            rawBackgroundUrl: (art as any)?.backgroundMusicUrl,
+            processedBgUrl: bgUrl,
+            hasBgElement: !!bgEl,
+            bgMusicRefSrc: bgEl?.src,
+            bgReadyState: bgEl?.readyState,
+            isBgMusicPlaying,
+            isPlaying: !bgEl?.paused,
+        });
+
+        if (bgUrl && bgEl) {
+            try {
+                if (bgEl.paused) {
+                    console.log('[toggleBgMusic] Playing background music');
+                    await bgEl.play();
+                    setIsBgMusicPlaying(true);
+                } else {
+                    console.log('[toggleBgMusic] Pausing background music');
+                    bgEl.pause();
+                    setIsBgMusicPlaying(false);
+                }
+            } catch (err) {
+                console.error('[toggleBgMusic] Error toggling background music:', err);
+                setIsBgMusicPlaying(false);
+            }
+        } else {
+            console.log('[toggleBgMusic] No background music available');
         }
     };
 
@@ -462,14 +643,52 @@ export default function ArtDetail({ id }: { id: string }) {
     }
 
     useEffect(() => {
-        if (!show2DModal) {
+        if (show2DModal) {
+            console.log('[ArtDetail] 2D Modal opened, audio data:', {
+                backgroundMusicUrl: (art as any)?.backgroundMusicUrl,
+                descriptionAudioUrl: (art as any)?.descriptionAudioUrl,
+                audioSubtitles: (art as any)?.audioSubtitles,
+                hasBackgroundMusic: !!(art as any)?.backgroundMusicUrl,
+                hasDescriptionAudio: !!(art as any)?.descriptionAudioUrl,
+            });
+
+            // Auto-play background music when modal opens
+            const bgUrl = getAudioUrl((art as any)?.backgroundMusicUrl);
+            console.log('[ArtDetail] Background music URL:', bgUrl, 'bgMusicRef:', !!bgMusicRef.current);
+
+            if (bgUrl && bgMusicRef.current) {
+                console.log('[ArtDetail] Scheduling background music auto-play in 300ms...');
+                setTimeout(async () => {
+                    const bgEl = bgMusicRef.current;
+                    console.log('[ArtDetail] Timeout fired, bgMusicRef:', !!bgEl);
+                    if (bgEl) {
+                        try {
+                            console.log('[ArtDetail] Attempting to auto-play background music:', bgUrl);
+                            await bgEl.play();
+                            console.log('[ArtDetail] Background music started successfully!');
+                            setIsBgMusicPlaying(true);
+                        } catch (err) {
+                            console.error('[ArtDetail] Failed to auto-play background music:', err);
+                        }
+                    } else {
+                        console.error('[ArtDetail] bgMusicRef.current is null in timeout');
+                    }
+                }, 300); // Small delay to ensure element is ready
+            } else {
+                console.log('[ArtDetail] NOT auto-playing:', { bgUrl, hasBgRef: !!bgMusicRef.current });
+            }
+        } else {
+            // Stop all audio when modal closes
             const el = audioRef.current;
+            const bgEl = bgMusicRef.current;
             try { el?.pause(); if (el) el.currentTime = 0 } catch { }
+            try { bgEl?.pause(); if (bgEl) bgEl.currentTime = 0 } catch { }
             if (typeof window !== 'undefined' && 'speechSynthesis' in window) { try { window.speechSynthesis.cancel() } catch { } }
             setIsAudioPlaying(false);
+            setIsBgMusicPlaying(false);
             setAudioTime({ current: 0, duration: 0 });
         }
-    }, [show2DModal])
+    }, [show2DModal, art])
 
     const seekAudio = (value: number) => {
         const el = audioRef.current
@@ -945,13 +1164,14 @@ export default function ArtDetail({ id }: { id: string }) {
                                     <p className="mt-[18px] text-[14px] text-gray-300">{art.description || 'No description available.'}</p>
 
                                     {/* Audio controls */}
-                                    <div className="mt-4">
+                                    <div className="mt-4 space-y-3">
+                                        {/* Top row: Description Audio and Fullscreen buttons */}
                                         <div className="flex items-center justify-between">
-                                            <button type="button" onClick={toggleAudio} disabled={false} className="inline-flex items-center gap-2 rounded-full text-white disabled:opacity-50">
+                                            <button type="button" onClick={toggleAudio} className="inline-flex items-center gap-2 rounded-full text-white">
                                                 <div className={`rounded-full p-[12px] ${isAudioPlaying ? 'text-white bg-[#9C27B0]' : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600'}`}>
                                                     <SpeakerHighIcon weight='fill' size={16} className={`${isAudioPlaying ? 'text-white' : 'text-gray-800 dark:text-white'}`} />
                                                 </div>
-                                                <span className="text-sm text-white">{isAudioPlaying ? 'Stop Audio' : 'Play audio'}</span>
+                                                <span className="text-sm text-white">{isAudioPlaying ? 'Stop Description' : 'Play Description Audio'}</span>
                                             </button>
                                             <button type="button" onClick={() => { setIsModalImageOnly(v => !v), setShowImageOverlay(true) }} className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-white">
                                                 <div className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-full p-[12px]">
@@ -960,67 +1180,108 @@ export default function ArtDetail({ id }: { id: string }) {
                                                 <span className="text-sm">{isModalImageOnly ? 'Exit Fullscreen' : 'View Fullscreen'}</span>
                                             </button>
                                         </div>
+
+                                        {/* Background Music Toggle (Green) */}
+                                        {getAudioUrl((art as any)?.backgroundMusicUrl) && (
+                                            <button type="button" onClick={toggleBgMusic} className="inline-flex items-center gap-2 rounded-full text-white">
+                                                <div className={`rounded-full p-[12px] ${isBgMusicPlaying ? 'bg-green-600' : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600'}`}>
+                                                    <SpeakerHighIcon weight='fill' size={16} className={`${isBgMusicPlaying ? 'text-white' : 'text-gray-800 dark:text-white'}`} />
+                                                </div>
+                                                <span className="text-sm text-white">{isBgMusicPlaying ? 'Mute Music' : 'Play Background Music'}</span>
+                                            </button>
+                                        )}
+
+                                        {/* Description Audio Timeline (Only show when playing) */}
+                                        {isAudioPlaying && getAudioUrl((art as any)?.descriptionAudioUrl) && (
+                                            <div className="mt-3">
+                                                <input
+                                                    type="range"
+                                                    min={0}
+                                                    max={Math.max(0, Math.floor(audioTime.duration || (audioRef.current?.duration || 0)))}
+                                                    value={Math.min(Math.floor(audioTime.current), Math.floor(audioTime.duration || (audioRef.current?.duration || 0)) || 0)}
+                                                    step={1}
+                                                    onChange={(e) => seekAudio(Number(e.target.value))}
+                                                    className="w-full accent-primary"
+                                                />
+                                                <div className="mt-1 flex items-center justify-between text-xs text-white">
+                                                    <span>{new Date(audioTime.current * 1000).toISOString().slice(14, 19)}</span>
+                                                    <span>{new Date(audioTime.duration * 1000).toISOString().slice(14, 19)}</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Transcription/Subtitles (Show when description audio is playing) */}
                                         {isAudioPlaying && (
-                                            <>
-                                                <div className="mt-3">
-                                                    <input
-                                                        type="range"
-                                                        min={0}
-                                                        max={Math.max(0, Math.floor(audioTime.duration || (audioRef.current?.duration || 0)))}
-                                                        value={Math.min(Math.floor(audioTime.current), Math.floor(audioTime.duration || (audioRef.current?.duration || 0)) || 0)}
-                                                        step={1}
-                                                        onChange={(e) => seekAudio(Number(e.target.value))}
-                                                        className="w-full accent-primary"
-                                                        disabled={!((art as any)?.audioUrl)}
-                                                    />
-                                                    <div className="mt-1 flex items-center justify-between text-xs text-white">
-                                                        <span>{new Date(audioTime.current * 1000).toISOString().slice(14, 19)}</span>
-                                                        <span>{new Date(audioTime.duration * 1000).toISOString().slice(14, 19)}</span>
+                                            <div className="mt-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <ClosedCaptioning size={24} weight='fill' className="text-white" />
+                                                        <span className="text-sm font-medium text-white">TRANSCRIPTION</span>
                                                     </div>
-                                                    {(art as any)?.audioUrl && (
-                                                        <audio
-                                                            ref={audioRef}
-                                                            src={(art as any).audioUrl as string}
-                                                            onLoadedMetadata={() => { const a = audioRef.current; if (a) setAudioTime({ current: 0, duration: a.duration || 0 }); }}
-                                                            onTimeUpdate={() => { const a = audioRef.current; if (a) setAudioTime(t => ({ ...t, current: a.currentTime, duration: a.duration || t.duration })); }}
-                                                            onPlay={() => setIsAudioPlaying(true)}
-                                                            onPause={() => setIsAudioPlaying(false)}
-                                                            onEnded={() => { setIsAudioPlaying(false); setAudioTime(t => ({ ...t, current: 0 })); }}
-                                                            onCanPlay={() => { const a = audioRef.current; }}
-                                                            onError={(e) => { const a = e.currentTarget as HTMLAudioElement; console.error('[audio] error', a.error); setIsAudioPlaying(false); }}
-                                                            preload="auto"
-                                                            playsInline
-                                                            className="hidden"
-                                                        />
+                                                    <select
+                                                        value={transcriptLang}
+                                                        onChange={(e) => setTranscriptLang(e.target.value)}
+                                                        className="text-sm rounded-md bg-gray-100 dark:bg-neutral-800 px-2 py-1 text-gray-800 dark:text-white"
+                                                    >
+                                                        {LANG_OPTIONS.map(l => (
+                                                            <option key={l.code} value={l.code}>{l.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="mt-2 space-y-2">
+                                                    {/* Check for VTT subtitles first, then fall back to transcripts */}
+                                                    {vttCues.length > 0 ? (
+                                                        <div className="rounded-lg bg-black/60 p-3 text-sm leading-relaxed text-white min-h-[60px] flex items-center">
+                                                            {currentSubtitle || 'Waiting for subtitle...'}
+                                                        </div>
+                                                    ) : Object.keys(((art as any).transcripts || {})).length > 0 && ((art as any).transcripts || {})[transcriptLang] ? (
+                                                        <div className="rounded-lg bg-black/60 p-3 text-sm leading-relaxed text-white">
+                                                            {((art as any).transcripts || {})[transcriptLang]}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="rounded-lg bg-black/60 p-3 text-sm text-gray-300">
+                                                            {((art as any)?.audioSubtitles || []).length > 0
+                                                                ? `Loading ${transcriptLang} subtitle...`
+                                                                : 'Transcription is unavailable for this language'
+                                                            }
+                                                        </div>
                                                     )}
                                                 </div>
-                                                <div className="mt-4">
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center gap-2">
-                                                            <ClosedCaptioning size={24} weight='fill' className="text-white" />
-                                                            <span className="text-sm font-medium text-white">TRANSCRIPT</span>
-                                                        </div>
-                                                        <select
-                                                            value={transcriptLang}
-                                                            onChange={(e) => setTranscriptLang(e.target.value)}
-                                                            className="text-sm rounded-md bg-gray-100 dark:bg-neutral-800 px-2 py-1 text-gray-800 dark:text-white"
-                                                        >
-                                                            {LANG_OPTIONS.map(l => (
-                                                                <option key={l.code} value={l.code}>{l.label}</option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                    <div className="mt-2 space-y-2">
-                                                        {Object.keys(((art as any).transcripts || {})).length > 0 && ((art as any).transcripts || {})[transcriptLang] ? (
-                                                            <div className="rounded-lg bg-gray-100 dark:bg-neutral-800 p-3 text-sm leading-relaxed text-gray-800 dark:text-white">{((art as any).transcripts || {})[transcriptLang]}</div>
-                                                        ) : (
-                                                            <div className="rounded-lg bg-gray-100 dark:bg-neutral-800 p-3 text-sm text-gray-600 dark:text-gray-300">Transcription is unavailable on this artwork</div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </>
+                                            </div>
                                         )}
                                     </div>
+
+                                    {/* Hidden Audio Elements */}
+                                    {getAudioUrl((art as any)?.descriptionAudioUrl) && (
+                                        <audio
+                                            ref={audioRef}
+                                            src={getAudioUrl((art as any)?.descriptionAudioUrl) || ''}
+                                            onLoadedMetadata={() => { const a = audioRef.current; if (a) { console.log('[audio] Description loaded, duration:', a.duration); setAudioTime({ current: 0, duration: a.duration || 0 }); } }}
+                                            onTimeUpdate={() => { const a = audioRef.current; if (a) setAudioTime(t => ({ ...t, current: a.currentTime, duration: a.duration || t.duration })); }}
+                                            onPlay={() => { console.log('[audio] Description playing'); setIsAudioPlaying(true); }}
+                                            onPause={() => { console.log('[audio] Description paused'); setIsAudioPlaying(false); }}
+                                            onEnded={() => { console.log('[audio] Description ended'); setIsAudioPlaying(false); setAudioTime(t => ({ ...t, current: 0 })); }}
+                                            onError={(e) => { const a = e.currentTarget as HTMLAudioElement; console.error('[audio] Description error:', a.error); setIsAudioPlaying(false); }}
+                                            preload="auto"
+                                            playsInline
+                                            className="hidden"
+                                        />
+                                    )}
+
+                                    {getAudioUrl((art as any)?.backgroundMusicUrl) && (
+                                        <audio
+                                            ref={bgMusicRef}
+                                            src={getAudioUrl((art as any)?.backgroundMusicUrl) || ''}
+                                            onLoadedMetadata={() => { console.log('[audio] Background music loaded'); }}
+                                            onPlay={() => { console.log('[audio] Background music playing'); setIsBgMusicPlaying(true); }}
+                                            onPause={() => { console.log('[audio] Background music paused'); setIsBgMusicPlaying(false); }}
+                                            onError={(e) => { const a = e.currentTarget as HTMLAudioElement; console.error('[audio] Background music error:', a.error); setIsBgMusicPlaying(false); }}
+                                            loop
+                                            preload="auto"
+                                            playsInline
+                                            className="hidden"
+                                        />
+                                    )}
 
                                 </div>
                             </div>

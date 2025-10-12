@@ -45,3 +45,21 @@ export const getArtworkImageUrl = (imagePath: string | null | undefined): string
 export const getEventBannerUrl = (bannerPath: string | null | undefined): string | null => {
   return getImageUrl(bannerPath);
 };
+
+/**
+ * Get audio file URL
+ * @param audioPath - Audio path from backend (e.g., "/uploads/audio/xxx.mp3")
+ * @returns Full URL or null
+ */
+export const getAudioUrl = (audioPath: string | null | undefined): string | null => {
+  return getImageUrl(audioPath);
+};
+
+/**
+ * Get VTT subtitle file URL
+ * @param vttPath - VTT path from backend (e.g., "/uploads/vtt/xxx.vtt")
+ * @returns Full URL or null
+ */
+export const getVttUrl = (vttPath: string | null | undefined): string | null => {
+  return getImageUrl(vttPath);
+};

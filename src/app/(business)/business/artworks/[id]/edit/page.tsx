@@ -27,7 +27,8 @@ import { toast } from 'react-hot-toast';
 import { useAppSelector } from '@/store/hooks';
 import axiosClient from '@/configs/axios-client';
 import { getArtworkImageUrl } from '@/utils/imageUtils';
-import artworkService from '@/services/artwork.service';
+import artworkService, { type AudioSubtitle } from '@/services/artwork.service';
+import SubtitleManager from '@/components/modules/Artwork/SubtitleManager';
 
 export default function EditArtworkPage() {
   const router = useRouter();
@@ -59,6 +60,13 @@ export default function EditArtworkPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Audio files state
+  const [backgroundMusicFile, setBackgroundMusicFile] = useState<File | null>(null);
+  const [descriptionAudioFile, setDescriptionAudioFile] = useState<File | null>(null);
+  const [backgroundMusicUrl, setBackgroundMusicUrl] = useState<string>('');
+  const [descriptionAudioUrl, setDescriptionAudioUrl] = useState<string>('');
+  const [subtitles, setSubtitles] = useState<AudioSubtitle[]>([]);
+
   // Fetch artwork data
   const { data: artwork, isLoading: artworkLoading } = useArtwork(artworkId);
 
@@ -84,6 +92,9 @@ export default function EditArtworkPage() {
         organizationId: artwork.organizationId || ''
       });
       setImagePreview(getArtworkImageUrl(artwork.imageUrl) || '');
+      setBackgroundMusicUrl(artwork.backgroundMusicUrl || '');
+      setDescriptionAudioUrl(artwork.descriptionAudioUrl || '');
+      setSubtitles(artwork.audioSubtitles || []);
     }
   }, [artwork]);
 
@@ -243,6 +254,24 @@ export default function EditArtworkPage() {
         });
       }
 
+      // Upload audio files if selected
+      let finalBackgroundMusicUrl = backgroundMusicUrl;
+      let finalDescriptionAudioUrl = descriptionAudioUrl;
+
+      if (backgroundMusicFile) {
+        toast.loading('Uploading background music...');
+        const musicUpload = await artworkService.uploadAudio(backgroundMusicFile);
+        finalBackgroundMusicUrl = musicUpload.url;
+        toast.dismiss();
+      }
+
+      if (descriptionAudioFile) {
+        toast.loading('Uploading description audio...');
+        const audioUpload = await artworkService.uploadAudio(descriptionAudioFile);
+        finalDescriptionAudioUrl = audioUpload.url;
+        toast.dismiss();
+      }
+
       const artworkData = {
         title: formData.title,
         description: formData.description || undefined,
@@ -256,6 +285,8 @@ export default function EditArtworkPage() {
         price: formData.price ? Number(formData.price) : undefined,
         tags: formData.tags,
         status: isDraft ? ('DRAFT' as const) : ('PUBLISHED' as const),
+        backgroundMusicUrl: finalBackgroundMusicUrl || undefined,
+        descriptionAudioUrl: finalDescriptionAudioUrl || undefined,
         ...(formData.organizationId ? { organizationId: formData.organizationId } : {})
       };
 
@@ -530,6 +561,97 @@ export default function EditArtworkPage() {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Audio Files Section */}
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-purple-50/30 dark:bg-purple-900/10">
+              <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+                Audio Files (Optional)
+              </h4>
+              <div className="space-y-4">
+                {/* Background Music */}
+                <div>
+                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">
+                    Background Music
+                  </label>
+                  {backgroundMusicUrl && !backgroundMusicFile && (
+                    <div className="mb-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-sm text-green-700 dark:text-green-300">
+                      ✓ Current background music is uploaded
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setBackgroundMusicFile(file);
+                        toast.success(`Selected: ${file.name}`);
+                      }
+                    }}
+                    className="block w-full text-sm text-gray-500 dark:text-gray-400
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-full file:border-0
+                      file:text-sm file:font-semibold
+                      file:bg-purple-50 file:text-purple-700
+                      hover:file:bg-purple-100
+                      dark:file:bg-purple-900/20 dark:file:text-purple-300"
+                  />
+                  {backgroundMusicFile && (
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      New file: {backgroundMusicFile.name}
+                    </p>
+                  )}
+                </div>
+
+                {/* Description Audio */}
+                <div>
+                  <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">
+                    Description Audio / Narration
+                  </label>
+                  {descriptionAudioUrl && !descriptionAudioFile && (
+                    <div className="mb-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-sm text-green-700 dark:text-green-300">
+                      ✓ Current description audio is uploaded
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setDescriptionAudioFile(file);
+                        toast.success(`Selected: ${file.name}`);
+                      }
+                    }}
+                    className="block w-full text-sm text-gray-500 dark:text-gray-400
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-full file:border-0
+                      file:text-sm file:font-semibold
+                      file:bg-purple-50 file:text-purple-700
+                      hover:file:bg-purple-100
+                      dark:file:bg-purple-900/20 dark:file:text-purple-300"
+                  />
+                  {descriptionAudioFile && (
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      New file: {descriptionAudioFile.name}
+                    </p>
+                  )}
+                </div>
+
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Supported formats: MP3, M4A, WAV, OGG, WEBM, AAC (Max 50MB)
+                </p>
+              </div>
+            </div>
+
+            {/* VTT Subtitle Management */}
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-indigo-50/30 dark:bg-indigo-900/10">
+              <SubtitleManager
+                artworkId={artworkId}
+                subtitles={subtitles}
+                onSubtitlesChange={setSubtitles}
+              />
             </div>
 
             {/* Actions */}
