@@ -89,7 +89,7 @@ export interface OrderListResponse {
 }
 
 export enum PaymentMethod {
-  PAYOS = 'PAYOS',
+  STRIPE = 'STRIPE',
   BANK_TRANSFER = 'BANK_TRANSFER',
   COD = 'COD',
 }
@@ -101,10 +101,12 @@ export interface Payment {
   amount: number;
   currency: string;
   status: PaymentStatus;
-  payosOrderCode?: number;
-  payosCheckoutUrl?: string;
-  payosQrCode?: string;
-  payosTransactionId?: string;
+  // Stripe specific fields
+  stripePaymentIntentId?: string;
+  stripeClientSecret?: string;
+  stripeCustomerId?: string;
+  stripeChargeId?: string;
+  // Bank transfer fields
   bankCode?: string;
   bankAccount?: string;
   transactionData?: any;
@@ -124,8 +126,11 @@ export interface CreatePaymentDto {
 
 export interface CreatePaymentResponse {
   payment: Payment;
-  checkoutUrl?: string;
-  qrCode?: string;
+  // Stripe response
+  clientSecret?: string;
+  paymentIntentId?: string;
+  publishableKey?: string;
+  // Bank transfer response
   instructions?: {
     bankName: string;
     accountNumber: string;

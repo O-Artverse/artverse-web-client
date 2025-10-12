@@ -3,10 +3,10 @@ import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Payment',
-  description: 'Complete your payment securely with PayOS.',
+  description: 'Complete your payment securely with Stripe.',
   openGraph: {
     title: 'Payment | Artverse',
-    description: 'Complete your payment securely with PayOS.',
+    description: 'Complete your payment securely with Stripe.',
   },
 };
 

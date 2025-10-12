@@ -25,18 +25,18 @@ class PaymentService {
     return response.data;
   }
 
-  // Check PayOS payment status
-  async checkPayOSStatus(orderCode: number): Promise<any> {
+  // Check Stripe payment status
+  async checkStripeStatus(paymentIntentId: string): Promise<any> {
     const response = await axiosClient.get(
-      `${this.BASE_URL}/payos/status/${orderCode}`,
+      `${this.BASE_URL}/stripe/status/${paymentIntentId}`,
     );
     return response.data;
   }
 
-  // Get payment by PayOS order code
-  async getPaymentByOrderCode(orderCode: string): Promise<Payment> {
+  // Get payment by Stripe PaymentIntent ID
+  async getPaymentByPaymentIntentId(paymentIntentId: string): Promise<Payment> {
     const response = await axiosClient.get<Payment>(
-      `${this.BASE_URL}/payos/orderCode/${orderCode}`,
+      `${this.BASE_URL}/stripe/payment-intent/${paymentIntentId}`,
     );
     return response.data;
   }
@@ -46,6 +46,18 @@ class PaymentService {
     const response = await axiosClient.delete<{ message: string }>(
       `${this.BASE_URL}/${paymentId}/cancel`,
     );
+    return response.data;
+  }
+
+  // Refund payment (new feature)
+  async refundPayment(
+    paymentId: string,
+    reason?: string,
+  ): Promise<{ message: string; refundId?: string }> {
+    const response = await axiosClient.post<{
+      message: string;
+      refundId?: string;
+    }>(`${this.BASE_URL}/${paymentId}/refund`, { reason });
     return response.data;
   }
 }
