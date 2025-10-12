@@ -136,7 +136,7 @@ export default function ArtworksPage() {
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="bg-white dark:bg-[#1E1B26]">
         <CardBody className="flex flex-col sm:flex-row gap-4 p-6">
           <Input
             placeholder="Search artworks..."
@@ -172,34 +172,34 @@ export default function ArtworksPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="bg-white dark:bg-[#1E1B26]">
           <CardBody className="text-center p-4">
             <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
-            <div className="text-sm text-gray-600">Total Artworks</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Total Artworks</div>
           </CardBody>
         </Card>
-        <Card>
+        <Card className="bg-white dark:bg-[#1E1B26]">
           <CardBody className="text-center p-4">
             <div className="text-2xl font-bold text-green-600">
               {stats.published}
             </div>
-            <div className="text-sm text-gray-600">Published</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Published</div>
           </CardBody>
         </Card>
-        <Card>
+        <Card className="bg-white dark:bg-[#1E1B26]">
           <CardBody className="text-center p-4">
             <div className="text-2xl font-bold text-orange-600">
               {stats.draft}
             </div>
-            <div className="text-sm text-gray-600">Drafts</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Drafts</div>
           </CardBody>
         </Card>
-        <Card>
+        <Card className="bg-white dark:bg-[#1E1B26]">
           <CardBody className="text-center p-4">
             <div className="text-2xl font-bold text-purple-600">
-              ${Number(stats.totalValue).toLocaleString()}
+              {Number(stats.totalValue).toLocaleString('vi-VN')} VND
             </div>
-            <div className="text-sm text-gray-600">Total Value</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Total Value</div>
           </CardBody>
         </Card>
       </div>
@@ -207,7 +207,7 @@ export default function ArtworksPage() {
       {/* Artworks Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredArtworks.map((artwork) => (
-          <Card key={artwork.id} className="group hover:shadow-lg transition-shadow">
+          <Card key={artwork.id} className="bg-white dark:bg-[#1E1B26] group hover:shadow-lg transition-shadow">
             <CardBody className="p-0">
               {/* Image */}
               <div className="relative aspect-video overflow-hidden rounded-t-lg">
@@ -262,7 +262,7 @@ export default function ArtworksPage() {
                   {artwork.price && (
                     <div className="flex items-center gap-1 ml-auto">
                       <CurrencyDollar size={16} />
-                      <span className="font-semibold">${Number(artwork.price).toFixed(2)}</span>
+                      <span className="font-semibold">{Number(artwork.price).toLocaleString('vi-VN')} VND</span>
                     </div>
                   )}
                 </div>
@@ -337,10 +337,10 @@ export default function ArtworksPage() {
 
       {/* Delete Confirmation Modal */}
       <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalContent>
-          <ModalHeader>Delete Artwork</ModalHeader>
+        <ModalContent className="bg-white dark:bg-[#1E1B26]">
+          <ModalHeader className="text-gray-900 dark:text-white">Delete Artwork</ModalHeader>
           <ModalBody>
-            <p>
+            <p className="text-gray-700 dark:text-gray-300">
               Are you sure you want to delete "{selectedArtwork?.title}"? This
               action cannot be undone.
             </p>

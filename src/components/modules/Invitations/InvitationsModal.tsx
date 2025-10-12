@@ -87,8 +87,8 @@ export default function InvitationsModal({
       size="3xl"
       scrollBehavior="inside"
     >
-      <ModalContent>
-        <ModalHeader className="flex items-center gap-2">
+      <ModalContent className="bg-white dark:bg-[#1E1B26]">
+        <ModalHeader className="flex items-center gap-2 text-gray-900 dark:text-white">
           <Envelope size={24} />
           Organization Invitations
           {invitations && invitations.length > 0 && (

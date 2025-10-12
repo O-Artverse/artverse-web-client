@@ -170,9 +170,9 @@ export default function ArtistsPage() {
   if (!currentOrg) {
     return (
       <div className="space-y-6">
-        <Card>
+        <Card className="bg-white dark:bg-[#1E1B26]">
           <CardBody className="text-center py-12">
-            <h2 className="text-xl font-semibold mb-2">No Organization Found</h2>
+            <h2 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">No Organization Found</h2>
             <p className="text-gray-600 dark:text-gray-400">
               You need to create or join an organization to manage artists.
             </p>
@@ -205,7 +205,7 @@ export default function ArtistsPage() {
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="bg-white dark:bg-[#1E1B26]">
         <CardBody className="flex flex-col sm:flex-row gap-4 p-6">
           <Input
             placeholder="Search artists..."
@@ -239,44 +239,44 @@ export default function ArtistsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="bg-white dark:bg-[#1E1B26]">
           <CardBody className="text-center p-4">
             <div className="text-2xl font-bold text-blue-600">
               {stats.total}
             </div>
-            <div className="text-sm text-gray-600">Total Members</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Total Members</div>
           </CardBody>
         </Card>
-        <Card>
+        <Card className="bg-white dark:bg-[#1E1B26]">
           <CardBody className="text-center p-4">
             <div className="text-2xl font-bold text-purple-600">
               {stats.admins}
             </div>
-            <div className="text-sm text-gray-600">Admins</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Admins</div>
           </CardBody>
         </Card>
-        <Card>
+        <Card className="bg-white dark:bg-[#1E1B26]">
           <CardBody className="text-center p-4">
             <div className="text-2xl font-bold text-green-600">
               {stats.artists}
             </div>
-            <div className="text-sm text-gray-600">Artists</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Artists</div>
           </CardBody>
         </Card>
-        <Card>
+        <Card className="bg-white dark:bg-[#1E1B26]">
           <CardBody className="text-center p-4">
             <div className="text-2xl font-bold text-orange-600">
               {stats.totalArtworks}
             </div>
-            <div className="text-sm text-gray-600">Total Artworks</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Total Artworks</div>
           </CardBody>
         </Card>
       </div>
 
       {/* Artists List */}
-      <Card>
+      <Card className="bg-white dark:bg-[#1E1B26]">
         <CardHeader>
-          <h3 className="text-lg font-semibold">Organization Members</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Organization Members</h3>
         </CardHeader>
         <CardBody>
           {isLoadingMembers ? (
@@ -290,7 +290,7 @@ export default function ArtistsPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredMembers.map((member) => (
-                <Card key={member.id} className="border">
+                <Card key={member.id} className="bg-white dark:bg-[#1E1B26] border">
                   <CardBody className="p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
@@ -303,7 +303,7 @@ export default function ArtistsPage() {
                           <h4 className="font-semibold text-gray-900 dark:text-white">
                             {member.user.firstName} {member.user.lastName}
                           </h4>
-                          <p className="text-sm text-gray-600">@{member.user.username}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">@{member.user.username}</p>
                         </div>
                       </div>
                       <Button
@@ -327,17 +327,17 @@ export default function ArtistsPage() {
                     </div>
 
                     <div className="space-y-2 mb-4">
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
                         <strong>{member.user.artworkCount || 0}</strong> artworks
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
                         Joined {new Date(member.joinedAt).toLocaleDateString()}
                       </div>
                     </div>
 
                     {member.user.description && (
                       <div className="mb-4">
-                        <p className="text-sm text-gray-600 line-clamp-2">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
                           {member.user.description}
                         </p>
                       </div>
@@ -384,8 +384,8 @@ export default function ArtistsPage() {
 
       {/* Invite Artist Modal */}
       <Modal isOpen={isInviteOpen} onClose={onInviteClose} size="lg">
-        <ModalContent>
-          <ModalHeader>Invite Artist to Organization</ModalHeader>
+        <ModalContent className="bg-white dark:bg-[#1E1B26]">
+          <ModalHeader className="text-gray-900 dark:text-white">Invite Artist to Organization</ModalHeader>
           <ModalBody className="space-y-4">
             <Input
               label="Email Address"
@@ -427,10 +427,10 @@ export default function ArtistsPage() {
 
       {/* Remove Artist Modal */}
       <Modal isOpen={isRemoveOpen} onClose={onRemoveClose}>
-        <ModalContent>
-          <ModalHeader>Remove Artist</ModalHeader>
+        <ModalContent className="bg-white dark:bg-[#1E1B26]">
+          <ModalHeader className="text-gray-900 dark:text-white">Remove Artist</ModalHeader>
           <ModalBody>
-            <p>
+            <p className="text-gray-700 dark:text-gray-300">
               Are you sure you want to remove <strong>{selectedArtist?.user?.firstName} {selectedArtist?.user?.lastName}</strong> from the organization?
               This action cannot be undone and they will lose access to organization resources.
             </p>

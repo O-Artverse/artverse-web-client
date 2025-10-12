@@ -161,7 +161,7 @@ export default function EventsPage() {
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="bg-white dark:bg-[#1E1B26]">
         <CardBody className="flex flex-col lg:flex-row gap-4 p-6">
           <Input
             placeholder="Search events..."
@@ -201,28 +201,28 @@ export default function EventsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="bg-white dark:bg-[#1E1B26]">
           <CardBody className="text-center p-4">
             <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
-            <div className="text-sm text-gray-600">Total Events</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Total Events</div>
           </CardBody>
         </Card>
-        <Card>
+        <Card className="bg-white dark:bg-[#1E1B26]">
           <CardBody className="text-center p-4">
             <div className="text-2xl font-bold text-green-600">{stats.active}</div>
-            <div className="text-sm text-gray-600">Active</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Active</div>
           </CardBody>
         </Card>
-        <Card>
+        <Card className="bg-white dark:bg-[#1E1B26]">
           <CardBody className="text-center p-4">
             <div className="text-2xl font-bold text-purple-600">{stats.upcoming}</div>
-            <div className="text-sm text-gray-600">Upcoming</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Upcoming</div>
           </CardBody>
         </Card>
-        <Card>
+        <Card className="bg-white dark:bg-[#1E1B26]">
           <CardBody className="text-center p-4">
             <div className="text-2xl font-bold text-orange-600">{stats.totalAttendees}</div>
-            <div className="text-sm text-gray-600">Total Attendees</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Total Attendees</div>
           </CardBody>
         </Card>
       </div>
@@ -236,7 +236,7 @@ export default function EventsPage() {
 
       {/* Error State */}
       {error && (
-        <Card>
+        <Card className="bg-white dark:bg-[#1E1B26]">
           <CardBody className="text-center py-12">
             <p className="text-red-500">Failed to load events. Please try again.</p>
           </CardBody>
@@ -247,7 +247,7 @@ export default function EventsPage() {
       {!isLoading && !error && filteredEvents.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {filteredEvents.map((event) => (
-            <Card key={event.id} className="group hover:shadow-lg transition-shadow">
+            <Card key={event.id} className="bg-white dark:bg-[#1E1B26] group hover:shadow-lg transition-shadow">
               <CardBody className="p-0">
                 {/* Banner Image */}
                 <div className="relative aspect-video overflow-hidden rounded-t-lg">
@@ -314,7 +314,7 @@ export default function EventsPage() {
                     {event.ticketPrice && event.ticketPrice > 0 && (
                       <div className="flex items-center gap-2">
                         <Ticket size={16} />
-                        <span>${event.ticketPrice} per ticket</span>
+                        <span>{Number(event.ticketPrice).toLocaleString('vi-VN')} VND per ticket</span>
                       </div>
                     )}
                   </div>
@@ -391,7 +391,7 @@ export default function EventsPage() {
 
       {/* Empty State */}
       {!isLoading && !error && filteredEvents.length === 0 && (
-        <Card>
+        <Card className="bg-white dark:bg-[#1E1B26]">
           <CardBody className="text-center py-12">
             <div className="text-gray-400 mb-4">
               <Calendar size={48} className="mx-auto" />
@@ -417,10 +417,10 @@ export default function EventsPage() {
 
       {/* Delete Confirmation Modal */}
       <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalContent>
-          <ModalHeader>Delete Event</ModalHeader>
+        <ModalContent className="bg-white dark:bg-[#1E1B26]">
+          <ModalHeader className="text-gray-900 dark:text-white">Delete Event</ModalHeader>
           <ModalBody>
-            <p>
+            <p className="text-gray-700 dark:text-gray-300">
               Are you sure you want to delete &quot;{selectedEvent?.title}&quot;? This action
               cannot be undone and all registered attendees will be notified.
             </p>

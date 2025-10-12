@@ -28,10 +28,12 @@ export default function FavoriteArtworkSelector({ artworks, onSendArtwork, onClo
   };
 
   return (
-    <div className="absolute bottom-20 left-4 right-4 bg-white dark:bg-black backdrop-blur-sm rounded-xl p-4">
+    <div className="absolute bottom-20 left-4 right-4 bg-white dark:bg-[#1E1B26] rounded-xl p-4 shadow-lg">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-bold text-[14px] dark:text-white text-black">Send your favorite</h3>
-        <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded"><XIcon size={12} /></button>
+        <h3 className="font-bold text-[14px] text-gray-800 dark:text-white">Send your favorite</h3>
+        <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
+          <XIcon size={12} className="text-gray-800 dark:text-white" />
+        </button>
       </div>
 
     
@@ -72,7 +74,7 @@ export default function FavoriteArtworkSelector({ artworks, onSendArtwork, onClo
             );
           })
         ) : (
-          <div className="text-white text-center py-8">
+          <div className="text-gray-600 dark:text-gray-400 text-center py-8">
             No artworks available
           </div>
         )}

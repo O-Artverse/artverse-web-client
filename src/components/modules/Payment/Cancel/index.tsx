@@ -67,7 +67,7 @@ export default function PaymentCancelPage() {
                 <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-neutral-800 rounded-lg">
                   <span className="text-gray-600 dark:text-gray-400">Total Amount</span>
                   <span className="font-bold text-xl text-gray-900 dark:text-gray-100">
-                    ${Number(order.totalAmount).toFixed(2)}
+                    {Number(order.totalAmount).toLocaleString('vi-VN')} VND
                   </span>
                 </div>
 

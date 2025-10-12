@@ -147,11 +147,12 @@ export default function AlbumDetailPage() {
                           <DotsThree size={18} weight="bold" />
                         </Button>
                       </DropdownTrigger>
-                      <DropdownMenu aria-label="Artwork actions">
+                      <DropdownMenu aria-label="Artwork actions" className="bg-white dark:bg-[#1E1B26]">
                         <DropdownItem
                           key="view"
                           as={Link}
                           href={`/explore/${artwork.id}`}
+                          className="text-gray-700 dark:text-white"
                         >
                           View Details
                         </DropdownItem>
@@ -159,7 +160,7 @@ export default function AlbumDetailPage() {
                           key="remove"
                           className="text-danger"
                           color="danger"
-                          startContent={<Trash size={16} weight="bold" />}
+                          startContent={<Trash size={16} weight="bold" className="text-danger" />}
                           onPress={() => deleteMutation.mutate(artwork.id)}
                         >
                           Remove from Album

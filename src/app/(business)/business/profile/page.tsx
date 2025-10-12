@@ -211,7 +211,7 @@ function ArtistOverview({ user }: { user: any }) {
               <CurrencyDollar size={16} className="text-yellow-500" />
               <span className="text-gray-700 dark:text-gray-300">Revenue</span>
             </span>
-            <span className="font-semibold text-gray-900 dark:text-white">$12.5K</span>
+            <span className="font-semibold text-gray-900 dark:text-white">12.5M VND</span>
           </div>
         </CardBody>
       </Card>
@@ -296,7 +296,7 @@ function OrganizationOverview({ user }: { user: any }) {
               <CurrencyDollar size={16} className="text-yellow-500" />
               <span className="text-gray-700 dark:text-gray-300">Revenue</span>
             </span>
-            <span className="font-semibold text-gray-900 dark:text-white">$45K</span>
+            <span className="font-semibold text-gray-900 dark:text-white">45M VND</span>
           </div>
         </CardBody>
       </Card>
@@ -328,7 +328,7 @@ function ArtistPortfolio() {
               <div className="text-sm text-gray-600 dark:text-gray-400">Drafts</div>
             </div>
             <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg text-center">
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">$12.5K</div>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">12.5M VND</div>
               <div className="text-sm text-gray-600 dark:text-gray-400">Total Sales</div>
             </div>
           </div>
@@ -366,7 +366,7 @@ function OrganizationGallery() {
               <div className="text-sm text-gray-600 dark:text-gray-400">Active Events</div>
             </div>
             <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg text-center">
-              <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">$45K</div>
+              <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">45M VND</div>
               <div className="text-sm text-gray-600 dark:text-gray-400">Revenue</div>
             </div>
           </div>

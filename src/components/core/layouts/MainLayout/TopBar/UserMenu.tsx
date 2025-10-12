@@ -125,7 +125,7 @@ export const UserMenu = () => {
         <CaretDown
           size={16}
           weight="bold"
-          className={`text-black dark:text-white transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`}
+          className={`text-gray-800 dark:text-white transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`}
         />
       </button>
 

@@ -104,9 +104,9 @@ export const SwitchToArtistModal: React.FC<SwitchToArtistModalProps> = ({
       size="lg"
       placement="center"
     >
-      <ModalContent>
+      <ModalContent className="bg-white dark:bg-[#1E1B26]">
         <ModalHeader className="flex flex-col gap-1">
-          <h2 className="text-xl font-bold text-foreground">Switch to Business Account</h2>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Switch to Business Account</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Upgrade your account to start selling artwork and access business features
           </p>
@@ -125,7 +125,7 @@ export const SwitchToArtistModal: React.FC<SwitchToArtistModalProps> = ({
             >
               <Radio value="ARTIST" className="w-full">
                 <div className="flex flex-col">
-                  <span className="font-medium text-foreground">Individual Artist</span>
+                  <span className="font-medium text-gray-900 dark:text-white">Individual Artist</span>
                   <span className="text-sm text-gray-500 dark:text-gray-400">
                     Perfect for individual artists and creators
                   </span>
@@ -133,7 +133,7 @@ export const SwitchToArtistModal: React.FC<SwitchToArtistModalProps> = ({
               </Radio>
               <Radio value="ORGANIZATION" className="w-full">
                 <div className="flex flex-col">
-                  <span className="font-medium text-foreground">Organization/Gallery</span>
+                  <span className="font-medium text-gray-900 dark:text-white">Organization/Gallery</span>
                   <span className="text-sm text-gray-500 dark:text-gray-400">
                     For galleries, studios, and art organizations
                   </span>

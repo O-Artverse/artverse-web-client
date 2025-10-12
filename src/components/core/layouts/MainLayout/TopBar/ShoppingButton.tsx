@@ -10,7 +10,7 @@ export const ShoppingButton = () => {
 
   return (
     <Link href="/cart" className='p-1 hover:bg-gray-200 dark:hover:bg-[#1B1F26] rounded-full w-8 h-8 flex items-center justify-center relative'>
-      <ShoppingBagOpenIcon size={20} weight="light" className='dark:text-white' />
+      <ShoppingBagOpenIcon size={20} weight="light" className='text-gray-800 dark:text-white' />
       {itemCount > 0 && (
         <span className='absolute -top-1 -right-1 w-5 h-5 bg-purple-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center'>
           {itemCount > 99 ? '99+' : itemCount}

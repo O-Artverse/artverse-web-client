@@ -53,7 +53,7 @@ export const SearchInput = () => {
         <input
           type='text'
           placeholder='Search'
-          className='w-full pl-10 rounded-md bg-[#F5F5F5] dark:bg-opacity-10 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#9C27B0] text-md px-[16px] py-[12px]'
+          className='w-full pl-10 rounded-md bg-[#F5F5F5] dark:bg-opacity-10 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#9C27B0] text-md px-[16px] py-[12px]'
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => setIsSearchFocused(true)}
@@ -63,7 +63,7 @@ export const SearchInput = () => {
       {isSearchFocused && (
         <div
           ref={dropdownRef}
-          className='absolute top-full left-0 mt-3 bg-[#FFFFFF]/70 dark:bg-[#1E1B26]/90 rounded-[12px] [box-shadow:0_1px_4px_rgba(0,0,0,0.2)] z-50 overflow-hidden backdrop-blur-sm'
+          className='absolute top-full left-0 mt-3 bg-white dark:bg-[#1E1B26] rounded-[12px] [box-shadow:0_1px_4px_rgba(0,0,0,0.2)] z-50 overflow-hidden'
           style={{
             width: 'calc(100% - 12px)',
             marginRight: '12px'
@@ -87,14 +87,14 @@ export const SearchInput = () => {
                     return (
                       <button
                         key={suggestion.id}
-                        className='flex items-center w-full text-left px-[11px] py-[11px] hover:bg-gray-200 dark:hover:bg-black rounded-md dark:text-white transition-all'
+                        className='flex items-center w-full text-left px-[11px] py-[11px] hover:bg-gray-100 dark:hover:bg-black rounded-md text-gray-800 dark:text-white transition-all'
                         onClick={() => {
                           setSearchQuery(suggestion.text)
                           addRecentSearch(suggestion.text)
                         }}
                       >
-                        <MagnifyingGlassIcon className='mr-[11px] text-black dark:text-white' size={16} />
-                        <div className="flex-1 text-black dark:text-white">
+                        <MagnifyingGlassIcon className='mr-[11px] text-gray-800 dark:text-white' size={16} />
+                        <div className="flex-1 text-gray-800 dark:text-white">
                           {beforeMatch}
                           <span className='text-purple-600 dark:text-purple-400 font-medium'>{match}</span>
                           {afterMatch}
@@ -106,14 +106,14 @@ export const SearchInput = () => {
                   return (
                     <button
                       key={suggestion.id}
-                      className='flex items-center w-full text-left px-[11px] py-[11px] hover:bg-gray-200 dark:hover:bg-black rounded-md dark:text-white'
+                      className='flex items-center w-full text-left px-[11px] py-[11px] hover:bg-gray-100 dark:hover:bg-black rounded-md text-gray-800 dark:text-white'
                       onClick={() => {
                         setSearchQuery(suggestion.text)
                         addRecentSearch(suggestion.text)
                       }}
                     >
-                      <MagnifyingGlassIcon className='mr-[11px] text-black dark:text-white' size={16} />
-                      <div className="flex-1 text-black dark:text-white">{text}</div>
+                      <MagnifyingGlassIcon className='mr-[11px] text-gray-800 dark:text-white' size={16} />
+                      <div className="flex-1 text-gray-800 dark:text-white">{text}</div>
                     </button>
                   );
                 })}
@@ -124,7 +124,7 @@ export const SearchInput = () => {
                   <Link
                     href={`/artist/${artist.id}`}
                     key={artist.id}
-                    className='flex items-center px-[11px] py-[12px] hover:bg-gray-200 dark:hover:bg-black rounded-md transition-all'
+                    className='flex items-center px-[11px] py-[12px] hover:bg-gray-100 dark:hover:bg-black rounded-md transition-all'
                   >
                     <div className='w-9 h-9 rounded-full bg-gray-300 dark:bg-gray-600 mr-[11px] overflow-hidden'>
                       {getUserAvatarUrl(artist.avatar) ?
@@ -136,14 +136,14 @@ export const SearchInput = () => {
                           className='object-cover w-full h-full'
                         />
                         :
-                        <div className='w-full h-full flex items-center justify-center text-xs dark:text-white'>
+                        <div className='w-full h-full flex items-center justify-center text-xs text-gray-800 dark:text-white'>
                           {artist.name.charAt(0)}
                         </div>
                       }
                     </div>
                     <div>
-                      <div className='text-black dark:text-white font-bold'>{artist.name}</div>
-                      <div className='text-sm items-center text-black dark:text-white flex gap-[11px]'>{artist.tag}
+                      <div className='text-gray-800 dark:text-white font-bold'>{artist.name}</div>
+                      <div className='text-sm items-center text-gray-600 dark:text-gray-400 flex gap-[11px]'>{artist.tag}
                         {artist.isVerify && (
                           <Image src={SealCheckUrl} alt="Play" className="w-[14px] h-[14px]" />
                         )}
@@ -159,12 +159,12 @@ export const SearchInput = () => {
             <div className='p-[11px]'>
               {recentSearchTags &&
                 <div className='mb-[11px]'>
-                  <h3 className='text-sm font-medium mb-[11px] dark:text-white'>Recent search</h3>
+                  <h3 className='text-sm font-medium mb-[11px] text-gray-800 dark:text-white'>Recent search</h3>
                   <div className='flex flex-wrap gap-[11px]'>
                     {recentSearchTags.map((tag, index) => (
                       <div key={index} className='relative group'>
                         <button
-                          className='px-[11px] py-[6px] bg-gray-100 dark:bg-[#121212] dark:text-gray-200 rounded-md text-sm hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center'
+                          className='px-[11px] py-[6px] bg-gray-100 dark:bg-[#121212] text-gray-800 dark:text-gray-200 rounded-md text-sm hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center'
                           onClick={() => {
                             setSearchQuery(tag)
                             addRecentSearch(tag)
@@ -187,7 +187,7 @@ export const SearchInput = () => {
                 </div>}
               {recommendedCategories &&
                 <div className='mb-[11px]'>
-                  <h3 className='text-sm font-medium mb-[11px] dark:text-white'>Recommend for you</h3>
+                  <h3 className='text-sm font-medium mb-[11px] text-gray-800 dark:text-white'>Recommend for you</h3>
                   <div className='grid grid-cols-8 gap-[11px]'>
                     {recommendedCategories.map((category) => (
                       <Link
@@ -206,9 +206,9 @@ export const SearchInput = () => {
                             />
                           </div>
                           <div className='absolute bottom-1 left-0 right-0 flex items-center justify-center'>
-                            <span className='text-black dark:text-white text-xs font-medium text-center px-[11px]'>{category.title}</span>
+                            <span className='text-gray-800 dark:text-white text-xs font-medium text-center px-[11px]'>{category.title}</span>
                           </div>
-                          <div className='w-full h-full bg-white dark:bg-black'></div>
+                          <div className='w-full h-full bg-gray-50 dark:bg-black'></div>
                         </div>
                       </Link>
                     ))}
@@ -216,7 +216,7 @@ export const SearchInput = () => {
                 </div>}
               {popularCategories &&
                 <div>
-                  <h3 className='text-sm font-medium mb-[11px] dark:text-white'>People often search on Artverse</h3>
+                  <h3 className='text-sm font-medium mb-[11px] text-gray-800 dark:text-white'>People often search on Artverse</h3>
                   <div className='grid grid-cols-8 gap-[11px]'>
                     {popularCategories.map((category) => (
                       <Link
@@ -235,9 +235,9 @@ export const SearchInput = () => {
                             />
                           </div>
                           <div className='absolute bottom-1 left-0 right-0 flex items-center justify-center'>
-                            <span className='text-black dark:text-white text-xs font-medium text-center px-[11px]'>{category.title}</span>
+                            <span className='text-gray-800 dark:text-white text-xs font-medium text-center px-[11px]'>{category.title}</span>
                           </div>
-                          <div className='w-full h-full bg-white dark:bg-black'></div>
+                          <div className='w-full h-full bg-gray-50 dark:bg-black'></div>
                         </div>
                       </Link>
                     ))}

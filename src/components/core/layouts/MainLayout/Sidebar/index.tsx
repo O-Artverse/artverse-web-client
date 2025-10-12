@@ -55,7 +55,7 @@ export const SidebarItem = ({ icon, activeIcon, href }: SidebarItemProps) => {
 
     return (
         <button className={`w-full h-fit flex items-center justify-center p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all`} onClick={() => href && router.push(href)}>
-            <span className="dark:text-white">
+            <span className="text-gray-800 dark:text-white">
                 {isActive && !isActiveUnRoute ? activeIcon : icon}
             </span>
         </button>
@@ -78,7 +78,7 @@ export const SideBarItemUnRoute = ({ icon, activeIcon, unRouteKey }: SidebarItem
         <button
             className={`w-full h-fit flex items-center justify-center p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all`}
             onClick={handleSetActiveSideBarUnRoute}>
-            <span className="dark:text-white">
+            <span className="text-gray-800 dark:text-white">
                 {activeSideBarUnRoute === unRouteKey ? activeIcon : icon}
             </span>
         </button>
@@ -94,26 +94,26 @@ export const SettingItem = () => {
         <PopoverTrigger>
             <div className='w-full h-fit flex items-center justify-center  cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all'>
                 <div className='p-3'>
-                    <GearIcon size={24} weight={isOpen ? 'fill' : 'light'} className="dark:text-white" />
+                    <GearIcon size={24} weight={isOpen ? 'fill' : 'light'} className="text-gray-800 dark:text-white" />
                 </div>
             </div>
         </PopoverTrigger>
-        <PopoverContent className="dark:bg-gray-800">
+        <PopoverContent className="bg-white dark:bg-gray-800">
             <div className="px-3 py-4">
-                <div className="text-small font-bold mb-2 dark:text-white">Settings</div>
+                <div className="text-small font-bold mb-2 text-gray-800 dark:text-white">Settings</div>
                 <div className="flex flex-col gap-2">
-                    <button className="text-tiny hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-white p-2 rounded-lg flex items-center gap-2 w-full" onClick={() => router.push('/settings?active=edit-profile')}>
+                    <button className="text-tiny text-left hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-white p-2 rounded-lg flex items-center gap-2 w-full" onClick={() => router.push('/settings?active=edit-profile')}>
                         Account Settings
                     </button>
-                    <button className="text-tiny hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-white p-2 rounded-lg flex items-center gap-2 w-full"
+                    <button className="text-tiny text-left hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-white p-2 rounded-lg flex items-center gap-2 w-full"
                         onClick={() => router.push('/settings/privacy-security')}
                     >
                         Privacy & Security
                     </button>
-                    <button className="text-tiny hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-white p-2 rounded-lg flex items-center gap-2 w-full">
+                    <button className="text-tiny text-left hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-white p-2 rounded-lg flex items-center gap-2 w-full">
                         Help & Support
                     </button>
-                    <button className="text-tiny hover:bg-gray-200 dark:hover:bg-gray-700 p-2 rounded-lg flex items-center gap-2 w-full text-red-500 dark:text-red-400"
+                    <button className="text-tiny text-left hover:bg-gray-200 dark:hover:bg-gray-700 p-2 rounded-lg flex items-center gap-2 w-full text-red-500 dark:text-red-400"
                         onClick={() => {}}
                     >
                         Log Out

@@ -346,9 +346,9 @@ export default function EditArtworkPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Image Upload */}
-        <Card className="lg:col-span-1">
+        <Card className="bg-white dark:bg-[#1E1B26] lg:col-span-1">
           <CardHeader>
-            <h3 className="text-lg font-semibold">Artwork Image</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Artwork Image</h3>
           </CardHeader>
           <CardBody className="space-y-4">
             {/* Current/Preview Image */}
@@ -396,9 +396,9 @@ export default function EditArtworkPage() {
         </Card>
 
         {/* Artwork Details */}
-        <Card className="lg:col-span-2">
+        <Card className="bg-white dark:bg-[#1E1B26] lg:col-span-2">
           <CardHeader>
-            <h3 className="text-lg font-semibold">Artwork Details</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Artwork Details</h3>
           </CardHeader>
           <CardBody className="space-y-6">
             {/* Basic Info */}
@@ -494,19 +494,19 @@ export default function EditArtworkPage() {
                 Pricing (Optional)
               </h4>
               <Input
-                label="Price (USD)"
-                placeholder="0.00"
+                label="Price (VND)"
+                placeholder="0"
                 type="number"
                 value={formData.price}
                 onChange={(e) => handleInputChange('price', e.target.value)}
-                startContent={<span className="text-gray-500 dark:text-gray-400">$</span>}
+                endContent={<span className="text-gray-500 dark:text-gray-400">VND</span>}
                 description="Leave blank if artwork is not for sale"
               />
             </div>
 
             {/* Tags */}
             <div className="space-y-3">
-              <label className="text-sm font-medium">Tags</label>
+              <label className="text-sm font-medium text-gray-900 dark:text-white">Tags</label>
               <div className="flex gap-2">
                 <Input
                   placeholder="Add a tag"

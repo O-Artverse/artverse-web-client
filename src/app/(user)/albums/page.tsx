@@ -142,10 +142,10 @@ export default function AlbumsPage() {
 
       {/* Create Album Modal */}
       <Modal isOpen={isOpen} onOpenChange={onOpenChange} size="lg">
-        <ModalContent>
+        <ModalContent className="bg-white dark:bg-[#1E1B26]">
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col gap-1">Create New Album</ModalHeader>
+              <ModalHeader className="flex flex-col gap-1 text-gray-900 dark:text-white">Create New Album</ModalHeader>
               <ModalBody>
                 <Input
                   label="Album Name"

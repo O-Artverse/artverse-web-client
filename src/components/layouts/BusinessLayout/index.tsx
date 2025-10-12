@@ -254,25 +254,28 @@ const BusinessLayout: React.FC<BusinessLayoutProps> = ({ children }) => {
                     <CaretDown size={16} className="text-gray-400" />
                   </div>
                 </DropdownTrigger>
-                <DropdownMenu aria-label="User menu actions">
+                <DropdownMenu aria-label="User menu actions" className="bg-white dark:bg-[#1E1B26] rounded-lg">
                   <DropdownItem
                     key="profile"
-                    startContent={<UserCircle size={16} />}
+                    startContent={<UserCircle size={16} className="text-gray-700 dark:text-white" />}
                     onPress={() => router.push('/profile')}
+                    className="text-gray-700 dark:text-white"
                   >
                     My Profile
                   </DropdownItem>
                   <DropdownItem
                     key="switch-user"
-                    startContent={<Desktop size={16} />}
+                    startContent={<Desktop size={16} className="text-gray-700 dark:text-white" />}
                     onPress={handleSwitchToUser}
+                    className="text-gray-700 dark:text-white"
                   >
                     Switch to User View
                   </DropdownItem>
                   <DropdownItem
                     key="theme"
-                    startContent={!mounted ? <Moon size={16} /> : (theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />)}
+                    startContent={!mounted ? <Moon size={16} className="text-gray-700 dark:text-white" /> : (theme === 'dark' ? <Sun size={16} className="text-gray-700 dark:text-white" /> : <Moon size={16} className="text-gray-700 dark:text-white" />)}
                     onPress={toggleTheme}
+                    className="text-gray-700 dark:text-white"
                   >
                     {!mounted ? 'Dark Mode' : (theme === 'dark' ? 'Light Mode' : 'Dark Mode')}
                   </DropdownItem>
@@ -281,6 +284,7 @@ const BusinessLayout: React.FC<BusinessLayoutProps> = ({ children }) => {
                     color="danger"
                     startContent={<SignOut size={16} />}
                     onPress={handleLogout}
+                    className="text-red-600 dark:text-red-400"
                   >
                     Sign Out
                   </DropdownItem>

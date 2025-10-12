@@ -270,9 +270,9 @@ export default function CreateEventPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Banner Upload */}
-        <Card className="lg:col-span-1">
+        <Card className="bg-white dark:bg-[#1E1B26] lg:col-span-1">
           <CardHeader>
-            <h3 className="text-lg font-semibold">Event Banner</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Event Banner</h3>
           </CardHeader>
           <CardBody className="space-y-4">
             {/* Upload Area */}
@@ -318,9 +318,9 @@ export default function CreateEventPage() {
         </Card>
 
         {/* Event Details */}
-        <Card className="lg:col-span-2">
+        <Card className="bg-white dark:bg-[#1E1B26] lg:col-span-2">
           <CardHeader>
-            <h3 className="text-lg font-semibold">Event Details</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Event Details</h3>
           </CardHeader>
           <CardBody className="space-y-6">
             {/* Basic Info */}
@@ -448,12 +448,12 @@ export default function CreateEventPage() {
 
                 {formData.hasTickets && (
                   <Input
-                    label="Ticket Price (USD)"
+                    label="Ticket Price (VND)"
                     type="number"
                     value={formData.ticketPrice.toString()}
                     onChange={(e) => handleInputChange('ticketPrice', parseFloat(e.target.value) || 0)}
-                    startContent={<span className="text-gray-500">$</span>}
-                    endContent={<Ticket size={16} className="text-gray-400" />}
+                    endContent={<span className="text-gray-500">VND</span>}
+                    startContent={<Ticket size={16} className="text-gray-400" />}
                   />
                 )}
               </div>

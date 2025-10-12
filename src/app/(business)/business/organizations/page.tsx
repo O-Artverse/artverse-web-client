@@ -125,11 +125,11 @@ export default function OrganizationsPage() {
       </div>
 
       {/* My Organizations */}
-      <Card>
+      <Card className="bg-white dark:bg-[#1E1B26]">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Buildings size={20} />
-            <h2 className="text-xl font-semibold">My Organizations</h2>
+            <Buildings size={20} className="text-gray-900 dark:text-white" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">My Organizations</h2>
           </div>
         </CardHeader>
         <CardBody>
@@ -140,7 +140,7 @@ export default function OrganizationsPage() {
           ) : joinedOrgs && joinedOrgs.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {joinedOrgs.map((org) => (
-                <Card key={org.id} className="border">
+                <Card key={org.id} className="bg-white dark:bg-[#1E1B26] border">
                   <CardBody className="p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
@@ -164,7 +164,7 @@ export default function OrganizationsPage() {
                       {org.description || 'No description available'}
                     </p>
 
-                    <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                    <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
                       <span>{org._count.members} members</span>
                       <span>{org._count.artworks} artworks</span>
                       {org.joinedAt && (
@@ -210,12 +210,12 @@ export default function OrganizationsPage() {
       </Card>
 
       {/* Available Organizations */}
-      <Card>
+      <Card className="bg-white dark:bg-[#1E1B26]">
         <CardHeader>
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-2">
-              <Users size={20} />
-              <h2 className="text-xl font-semibold">Discover Organizations</h2>
+              <Users size={20} className="text-gray-900 dark:text-white" />
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Discover Organizations</h2>
             </div>
             <Input
               placeholder="Search organizations..."
@@ -235,7 +235,7 @@ export default function OrganizationsPage() {
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {availableOrgs.map((org) => (
-                  <Card key={org.id} className="border hover:shadow-md transition-shadow">
+                  <Card key={org.id} className="bg-white dark:bg-[#1E1B26] border hover:shadow-md transition-shadow">
                     <CardBody className="p-4">
                       <div className="flex items-center gap-3 mb-3">
                         <Avatar
@@ -247,7 +247,7 @@ export default function OrganizationsPage() {
                           <h3 className="font-semibold text-gray-900 dark:text-white">
                             {org.name}
                           </h3>
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                             <Users size={14} />
                             <span>{org._count.members} members</span>
                           </div>
@@ -258,7 +258,7 @@ export default function OrganizationsPage() {
                         {org.description || 'No description available'}
                       </p>
 
-                      <div className="text-sm text-gray-500 mb-4">
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                         {org._count.artworks} artworks published
                       </div>
 
@@ -324,8 +324,8 @@ export default function OrganizationsPage() {
 
       {/* Request to Join Modal */}
       <Modal isOpen={isJoinOpen} onClose={onJoinClose} size="lg">
-        <ModalContent>
-          <ModalHeader>Request to Join Organization</ModalHeader>
+        <ModalContent className="bg-white dark:bg-[#1E1B26]">
+          <ModalHeader className="text-gray-900 dark:text-white">Request to Join Organization</ModalHeader>
           <ModalBody className="space-y-4">
             <div className="flex items-center gap-3 mb-2">
               <Avatar
@@ -334,7 +334,7 @@ export default function OrganizationsPage() {
                 size="lg"
               />
               <div>
-                <h3 className="font-semibold">{selectedOrg?.name}</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-white">{selectedOrg?.name}</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">{selectedOrg?._count.members} members</p>
               </div>
             </div>
@@ -372,10 +372,10 @@ export default function OrganizationsPage() {
 
       {/* Leave Organization Modal */}
       <Modal isOpen={isLeaveOpen} onClose={onLeaveClose}>
-        <ModalContent>
-          <ModalHeader>Leave Organization</ModalHeader>
+        <ModalContent className="bg-white dark:bg-[#1E1B26]">
+          <ModalHeader className="text-gray-900 dark:text-white">Leave Organization</ModalHeader>
           <ModalBody>
-            <p>
+            <p className="text-gray-700 dark:text-gray-300">
               Are you sure you want to leave "{selectedOrg?.name}"? You'll lose access to organization activities and your artworks may be removed from their showcase.
             </p>
           </ModalBody>

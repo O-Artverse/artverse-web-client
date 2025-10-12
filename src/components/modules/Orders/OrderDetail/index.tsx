@@ -163,7 +163,7 @@ export default function OrderDetailPage({ orderId }: OrderDetailPageProps) {
                           Quantity: {item.quantity}
                         </span>
                         <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
-                          ${(Number(item.price) * item.quantity).toFixed(2)}
+                          {(Number(item.price) * item.quantity).toLocaleString('vi-VN')} VND
                         </span>
                       </div>
                     </div>
@@ -238,20 +238,20 @@ export default function OrderDetailPage({ orderId }: OrderDetailPageProps) {
               <div className="space-y-3 text-sm mb-4">
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Subtotal</span>
-                  <span>${Number(order.subtotal).toFixed(2)}</span>
+                  <span>{Number(order.subtotal).toLocaleString('vi-VN')} VND</span>
                 </div>
 
                 {Number(order.tax) > 0 && (
                   <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Tax</span>
-                    <span>${Number(order.tax).toFixed(2)}</span>
+                    <span>{Number(order.tax).toLocaleString('vi-VN')} VND</span>
                   </div>
                 )}
 
                 {Number(order.shippingFee) > 0 && (
                   <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Shipping</span>
-                    <span>${Number(order.shippingFee).toFixed(2)}</span>
+                    <span>{Number(order.shippingFee).toLocaleString('vi-VN')} VND</span>
                   </div>
                 )}
 
@@ -260,7 +260,7 @@ export default function OrderDetailPage({ orderId }: OrderDetailPageProps) {
                 <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-gray-100">
                   <span>Total</span>
                   <span className="text-purple-600 dark:text-purple-400">
-                    ${Number(order.totalAmount).toFixed(2)}
+                    {Number(order.totalAmount).toLocaleString('vi-VN')} VND
                   </span>
                 </div>
               </div>

@@ -147,7 +147,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Banner */}
-          <Card>
+          <Card className="bg-white dark:bg-[#1E1B26]">
             <CardBody className="p-0">
               <div className="relative aspect-video overflow-hidden rounded-lg">
                 {event.bannerImage ? (
@@ -180,9 +180,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
           </Card>
 
           {/* Event Info */}
-          <Card>
+          <Card className="bg-white dark:bg-[#1E1B26]">
             <CardHeader>
-              <h2 className="text-xl font-bold">{event.title}</h2>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">{event.title}</h2>
             </CardHeader>
             <CardBody className="space-y-4">
               <p className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
@@ -249,7 +249,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                     <div>
                       <div className="font-medium">Ticket Price</div>
                       <div className="text-sm text-gray-600 dark:text-gray-400">
-                        ${event.ticketPrice}
+                        {Number(event.ticketPrice).toLocaleString('vi-VN')} VND
                       </div>
                     </div>
                   </div>
@@ -279,9 +279,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Organization Info */}
-          <Card>
+          <Card className="bg-white dark:bg-[#1E1B26]">
             <CardHeader>
-              <h3 className="font-semibold">Organized By</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Organized By</h3>
             </CardHeader>
             <CardBody>
               <User
@@ -295,9 +295,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
           </Card>
 
           {/* Creator Info */}
-          <Card>
+          <Card className="bg-white dark:bg-[#1E1B26]">
             <CardHeader>
-              <h3 className="font-semibold">Created By</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Created By</h3>
             </CardHeader>
             <CardBody>
               <User
@@ -313,12 +313,12 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
           {/* Registration Progress */}
           {event.maxAttendees && (
-            <Card>
+            <Card className="bg-white dark:bg-[#1E1B26]">
               <CardHeader>
-                <h3 className="font-semibold">Registration Status</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-white">Registration Status</h3>
               </CardHeader>
               <CardBody className="space-y-3">
-                <div className="flex justify-between text-sm text-gray-600">
+                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
                   <span>Capacity</span>
                   <span>{Math.round((event.registeredCount / event.maxAttendees) * 100)}%</span>
                 </div>
@@ -330,7 +330,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                     }}
                   />
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
                   {event.registeredCount} / {event.maxAttendees} spots filled
                 </div>
               </CardBody>
@@ -339,7 +339,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
 
           {/* Action Buttons (if not creator) */}
           {!isCreator && !isOrganizationOwner && (
-            <Card>
+            <Card className="bg-white dark:bg-[#1E1B26]">
               <CardBody>
                 <Button
                   color="primary"

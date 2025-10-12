@@ -103,19 +103,19 @@ export default function ChatRoom({ onBack }: ChatRoomProps) {
   }
   
   return (
-    <div onClick={() => setShowEmojiPicker(null)} className="flex flex-col h-full dark:bg-[#1E1B26]/90 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg">
+    <div onClick={() => setShowEmojiPicker(null)} className="flex flex-col h-full bg-white dark:bg-[#1E1B26] rounded-xl shadow-lg">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-white/10">
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-white/10">
         <div className="flex items-center gap-[10px]">
           {darkMode ? (
             <CaretLeftIcon onClick={onBack} size={20} color='#fff' className='cursor-pointer' />
           ) : (
             <CaretLeftIcon onClick={onBack} size={20} color='#000' className='cursor-pointer' />
           )}
-         
+
           {renderAvatar(activeRoom.participants[0], 'sm')}
           <div>
-            <h3 className="font-medium">{activeRoom.name}</h3>
+            <h3 className="font-medium text-gray-800 dark:text-white">{activeRoom.name}</h3>
             <div className="flex items-center gap-1">
               {getRoleBadge(activeRoom.participants[0].role, activeRoom.participants[0].verified)}
             </div>
@@ -126,7 +126,7 @@ export default function ChatRoom({ onBack }: ChatRoomProps) {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
         {messages.length === 0 ? (
-          <div className="text-center text-gray-500 py-8">
+          <div className="text-center text-gray-600 dark:text-gray-400 py-8">
             <p>No messages yet</p>
             <p className="text-sm">Start the conversation!</p>
           </div>
@@ -141,7 +141,7 @@ export default function ChatRoom({ onBack }: ChatRoomProps) {
                 <div key={message.id} >
                   {showDate && (
                     <div className="flex justify-center my-4 ">
-                      <span className="text-xs dark:text-white/60 text-black/60 px-3 py-1 rounded-full">
+                      <span className="text-xs text-gray-600 dark:text-white/60 px-3 py-1 rounded-full">
                         {formatMessageDate(message.timestamp)}
                       </span>
                     </div>
@@ -166,22 +166,22 @@ export default function ChatRoom({ onBack }: ChatRoomProps) {
 
       {/* Reply Preview */}
       {replyingTo && (
-        <div className="px-4 py-2 dark:bg-black/20 bg-white/20 ">
+        <div className="px-4 py-2 bg-gray-100 dark:bg-black/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
              {darkMode ? (
                   <ArrowBendDoubleUpLeftIcon weight='fill' size={16} className="text-white/60" />
                 ) : (
-                  <ArrowBendDoubleUpLeftIcon weight='fill' size={16} className="text-black/60" />
+                  <ArrowBendDoubleUpLeftIcon weight='fill' size={16} className="text-gray-600" />
                 )}
-              <span className="text-sm text-gray-600">Replying to {replyingTo.sender?.name || 'Unknown'}</span>
-              <span className="text-xs text-gray-500 truncate max-w-[200px]">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Replying to {replyingTo.sender?.name || 'Unknown'}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-500 truncate max-w-[200px]">
                 {replyingTo.content}
               </span>
             </div>
-            <button 
+            <button
               onClick={() => setReplyingTo(null)}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
             >
               <XIcon size={16} className='text-gray-500' />
             </button>
@@ -199,9 +199,9 @@ export default function ChatRoom({ onBack }: ChatRoomProps) {
       )}
 
       {/* Message Input */}
-      <div className="p-4 border-t border-white/10 ">
-        <div className="flex items-center gap-2  ">
-          <button 
+      <div className="p-4 border-t border-gray-200 dark:border-white/10">
+        <div className="flex items-center gap-2">
+          <button
             className="p-2 bg-[#9C27B0] rounded-full"
             onClick={() => setShowFavoriteArtworks(true)}
           >
@@ -214,14 +214,14 @@ export default function ChatRoom({ onBack }: ChatRoomProps) {
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="w-full px-4 py-2 pr-12 text-[14px] ts dark:text-white rounded-[12px] dark:bg-black bg-white shadow-sm shadow-[#000000]/25 focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder:text-gray-500 dark:placeholder:text-gray-500"
+              className="w-full px-4 py-2 pr-12 text-[14px] text-gray-800 dark:text-white rounded-[12px] bg-gray-50 dark:bg-black shadow-sm shadow-[#000000]/25 focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder:text-gray-500"
             />
             <button
               onClick={handleSendMessage}
               disabled={!messageInput.trim()}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2  text-white rounded-full  disabled:opacity-50 disabled:cursor-not-allowed"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <PaperPlaneRightIcon size={16} className='dark:text-white text-black hover:text-[#9C27B0]' />
+              <PaperPlaneRightIcon size={16} className='text-gray-800 dark:text-white hover:text-[#9C27B0]' />
             </button>
           </div>
         </div>
@@ -287,7 +287,7 @@ function MessageBubble({ message, currentUserId, onReply, showAvatar, findMessag
               avatar: message.sender?.avatar,
               status: 'online'
             }, 'sm')}
-            <span className="text-xs text-gray-500">{message.sender?.name || 'Unknown'}</span>
+            <span className="text-xs text-gray-600 dark:text-gray-400">{message.sender?.name || 'Unknown'}</span>
           </div>
         )}
         
@@ -296,21 +296,18 @@ function MessageBubble({ message, currentUserId, onReply, showAvatar, findMessag
           <div
             className={` px-4 py-3  rounded-2xl relative shadow-sm shadow-[#000000]/25 text-[14px] ${
               isOwn
-                ? 'bg-white '
-                : 'dark:text-white text-black'
+                ? 'bg-white dark:bg-white/20'
+                : 'bg-[#D243CF]/20'
             }`}
-            style={{
-              backgroundColor: isOwn ? darkMode ? 'rgba(255, 255, 255, 0.2)' : '#fff' : 'rgba(210, 67, 207, 0.2)'
-            }}
           >
             <div className="space-y-2 ">
-              <div className={`p-2 rounded-lg ${isOwn ? 'bg-[#D243CF]/20' : 'dark:bg-white/10 bg-white'} w-fit`}>
-                <p className={`text-[14px] dark:text-white text-black`}>
+              <div className={`p-2 rounded-lg ${isOwn ? 'bg-[#D243CF]/20' : 'bg-white dark:bg-white/10'} w-fit`}>
+                <p className={`text-[14px] text-gray-800 dark:text-white`}>
                     {originalMessage.content}
                   </p>
                 </div>
-                
-                <p className={`text-[14px] ${isOwn ? 'text-black dark:text-white' : 'dark:text-white text-black'}`}>
+
+                <p className={`text-[14px] text-gray-800 dark:text-white`}>
                   {message.content}
                 </p>
               </div>
@@ -329,14 +326,11 @@ function MessageBubble({ message, currentUserId, onReply, showAvatar, findMessag
                 <div
                 className={` px-4 py-3  rounded-2xl relative shadow-sm shadow-[#000000]/25 text-[14px] ${
                   isOwn
-                    ? 'bg-white '
-                    : 'dark:text-white text-black'
+                    ? 'bg-white dark:bg-white/20'
+                    : 'bg-[#D243CF]/20'
                 }`}
-                style={{
-                  backgroundColor: isOwn ? darkMode ? 'rgba(255, 255, 255, 0.2)' : '#fff' : 'rgba(210, 67, 207, 0.2)'
-                }}
               >
-                <p className="text-sm">{message.content}</p>
+                <p className="text-sm text-gray-800 dark:text-white">{message.content}</p>
               </div>
               )}
             </>
@@ -452,16 +446,16 @@ function MessageBubble({ message, currentUserId, onReply, showAvatar, findMessag
             {reactions.map((reaction, index) => (
               <div
                 key={index}
-                className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-full px-2 py-1 text-xs"
+                className="flex items-center gap-1 bg-gray-200 dark:bg-gray-700 rounded-full px-2 py-1 text-xs"
               >
                 <span>{reaction.emoji}</span>
-                <span className="text-gray-600 dark:text-gray-300">{reaction.count}</span>
+                <span className="text-gray-700 dark:text-gray-300">{reaction.count}</span>
               </div>
             ))}
           </div>
         )}
-        
-        <div className={`text-xs text-gray-400 mt-1 ${isOwn ? 'text-right' : 'text-left'}`}>
+
+        <div className={`text-xs text-gray-500 dark:text-gray-400 mt-1 ${isOwn ? 'text-right' : 'text-left'}`}>
           {new Date(message.timestamp).toLocaleTimeString([], { 
             hour: '2-digit', 
             minute: '2-digit' 

@@ -81,7 +81,7 @@ export default function PaymentSuccessPage() {
                 <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-neutral-800 rounded-lg">
                   <span className="text-gray-600 dark:text-gray-400">Total Amount</span>
                   <span className="font-bold text-xl text-purple-600 dark:text-purple-400">
-                    ${Number(payment.order?.totalAmount || payment.amount).toFixed(2)}
+                    {Number(payment.order?.totalAmount || payment.amount).toLocaleString('vi-VN')} VND
                   </span>
                 </div>
 

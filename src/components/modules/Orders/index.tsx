@@ -201,7 +201,7 @@ export default function OrdersPage() {
                         {order.items.length} item(s)
                       </span>
                       <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
-                        ${Number(order.totalAmount).toFixed(2)}
+                        {Number(order.totalAmount).toLocaleString('vi-VN')} VND
                       </span>
                     </div>
 

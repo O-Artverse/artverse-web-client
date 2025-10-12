@@ -65,7 +65,7 @@ export const getRoleBadge = (role?: string, verified?: boolean) => {
 
   return (
     <div className="flex items-center gap-[6px]">
-      <span className={`inline-flex items-center rounded-full text-[14px] font-regular dark:text-white text-black`}>
+      <span className={`inline-flex items-center rounded-full text-[14px] font-regular text-gray-600 dark:text-gray-400`}>
         {config.label}
       </span>
       {verified && (
@@ -120,7 +120,7 @@ export default function ChatList({ onSelectRoom }: ChatListProps) {
   };
 
   return (
-    <div className="flex flex-col h-full dark:bg-[#1E1B26]/90 bg-white/90 backdrop-blur-sm rounded-xl p-4 overflow-y-auto">
+    <div className="flex flex-col h-full bg-white dark:bg-[#1E1B26] rounded-xl p-4 overflow-y-auto">
       {/* Header */}
       <div className="mb-4">
         {showNewChat ?
@@ -150,13 +150,13 @@ export default function ChatList({ onSelectRoom }: ChatListProps) {
             <button
               type="button"
               onClick={() => setShowNewChat(true)}
-              className="w-full flex items-center gap-3 p-[8px] mb-[11px] text-left hover:bg-gray-50 dark:hover:bg-black rounded-lg transition-colors"
+              className="w-full flex items-center gap-3 p-[8px] mb-[11px] text-left hover:bg-gray-100 dark:hover:bg-black rounded-lg transition-colors"
             >
-              <div className="w-8 h-8 rounded-full bg-[#9C27B0]  dark:text-white text-black grid place-items-center">
+              <div className="w-8 h-8 rounded-full bg-[#9C27B0] grid place-items-center">
                 <PencilSimpleLineIcon size={16} weight="fill" color="#fff" />
               </div>
               <div className="flex-1">
-                <div className="font-bold text-[14px] dark:text-white text-black">Start new chat</div>
+                <div className="font-bold text-[14px] text-gray-800 dark:text-white">Start new chat</div>
               </div>
             </button>
           </div>
@@ -176,7 +176,7 @@ export default function ChatList({ onSelectRoom }: ChatListProps) {
                     setNewChatQuery(e.target.value);
                     handleSearch(e.target.value);
                   }}
-                  className="w-full pl-9 pr-4 py-2 rounded-[12px] focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-white/20 bg-white dark:text-white text-black text-sm"
+                  className="w-full pl-9 pr-4 py-2 rounded-[12px] focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50 dark:bg-white/20 text-gray-800 dark:text-white text-sm placeholder:text-gray-500"
                 />
               </div>
 
@@ -187,19 +187,19 @@ export default function ChatList({ onSelectRoom }: ChatListProps) {
         {/* Search Results */}
         {searchResults.length > 0 && (
           <div className="mb-4">
-            <h3 className="text-[14px] font-regular dark:text-white text-black mb-2">Search Results</h3>
+            <h3 className="text-[14px] font-regular text-gray-800 dark:text-white mb-2">Search Results</h3>
             <div className="space-y-2">
               {searchResults.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between p-3 hover:bg-white dark:hover:bg-black rounded-lg cursor-pointer transition-colors"
+                  className="flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-black rounded-lg cursor-pointer transition-colors"
                   onClick={() => handleCreateRoom(user)}
                 >
                   <div className="flex items-center gap-3 flex-1">
                     {renderAvatar(user, 'md')}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <div className="font-medium text-sm truncate">{user.name}</div>
+                        <div className="font-medium text-sm truncate text-gray-800 dark:text-white">{user.name}</div>
 
                       </div>
                       {getRoleBadge(user.role, user.verified)}
@@ -216,13 +216,13 @@ export default function ChatList({ onSelectRoom }: ChatListProps) {
       <div className="flex-1 ">
         {!showNewChat && (
           rooms.length === 0 ? (
-            <div className="text-center  py-8 dark:text-white text-black">
+            <div className="text-center py-8 text-gray-800 dark:text-white">
               <p>No conversations yet</p>
-              <p className="text-[14px] dark:text-white text-black">Start a new chat to begin</p>
+              <p className="text-[14px] text-gray-600 dark:text-gray-400">Start a new chat to begin</p>
             </div>
           ) : (
             <div className="space-y-2">
-              <h2 className="text-[14px] font-regular dark:text-white text-black mb-[11px]">Your messages</h2>
+              <h2 className="text-[14px] font-regular text-gray-800 dark:text-white mb-[11px]">Your messages</h2>
               {rooms.map((room) => {
                 // Get the other participant for direct messages
                 const otherParticipant = room.participants.find(p => p.id !== 'current-user-id'); // Replace with actual current user ID
@@ -230,28 +230,28 @@ export default function ChatList({ onSelectRoom }: ChatListProps) {
                 return (
                   <div
                     key={room.id}
-                    className="flex items-center gap-[11px] p-3 hover:bg-white dark:hover:bg-black rounded-lg cursor-pointer transition-colors"
+                    className="flex items-center gap-[11px] p-3 hover:bg-gray-100 dark:hover:bg-black rounded-lg cursor-pointer transition-colors"
                     onClick={() => onSelectRoom(room)}
                   >
                     {otherParticipant ? renderAvatar(otherParticipant, 'md') : (
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center dark:text-white text-black font-medium">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-medium">
                         {room.name.charAt(0)}
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-sm truncate dark:text-white text-black">{room.name}</h4>
+                          <h4 className="font-medium text-sm truncate text-gray-800 dark:text-white">{room.name}</h4>
                           {otherParticipant && getRoleBadge(otherParticipant.role, otherParticipant.verified)}
                         </div>
                         <div className="flex items-center gap-2">
                           {room.lastMessage && (
-                            <span className="text-[12px] font-regular dark:text-white text-black">
+                            <span className="text-[12px] font-regular text-gray-600 dark:text-gray-400">
                               {getTimeAgo(room.lastMessage.timestamp)}
                             </span>
                           )}
                           {room.unreadCount > 0 && (
-                            <span className="bg-purple-600 dark:text-white text-black text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                            <span className="bg-purple-600 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
                               {room.unreadCount}
                             </span>
                           )}
@@ -259,7 +259,7 @@ export default function ChatList({ onSelectRoom }: ChatListProps) {
                       </div>
                       <div className="flex items-center justify-between">
                         {room.lastMessage && (
-                          <p className="text-[14px] font-regular dark:text-white text-black truncate flex-1">
+                          <p className="text-[14px] font-regular text-gray-600 dark:text-gray-400 truncate flex-1">
                             {room.lastMessage.content}
                           </p>
                         )}
@@ -273,19 +273,19 @@ export default function ChatList({ onSelectRoom }: ChatListProps) {
         )}
         {searchResults.length === 0 && recommendedUsers.length > 0 && (
           <div className="mb-4">
-            <h3 className="text-[14px] font-regular dark:text-white text-black mt-[11px] mb-[11px]">Recommended</h3>
+            <h3 className="text-[14px] font-regular text-gray-800 dark:text-white mt-[11px] mb-[11px]">Recommended</h3>
             <div className="space-y-2">
               {recommendedUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between p-3 hover:bg-white dark:hover:bg-black rounded-lg cursor-pointer transition-colors"
+                  className="flex items-center justify-between p-3 hover:bg-gray-100 dark:hover:bg-black rounded-lg cursor-pointer transition-colors"
                   onClick={() => handleCreateRoom(user)}
                 >
                   <div className="flex items-center gap-3 flex-1">
                     {renderAvatar(user, 'md')}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <div className="font-medium text-sm truncate">{user.name}</div>
+                        <div className="font-medium text-sm truncate text-gray-800 dark:text-white">{user.name}</div>
 
                       </div>
                       {getRoleBadge(user.role, user.verified)}

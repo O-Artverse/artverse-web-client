@@ -32,7 +32,7 @@ function ActionBtn({ children, label }: React.PropsWithChildren<{ label: string 
             aria-label={label}
             className="h-9 w-9 grid place-items-center rounded-full bg-white dark:bg-neutral-900/90 ring-1 ring-black/10 dark:ring-white/10 shadow-md backdrop-blur hover:shadow-[0_0_10px_rgba(210,67,207,0.35)] dark:hover:shadow-[0_0_12px_rgba(210,67,207,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
         >
-            <span className="text-primary">{children}</span>
+            <span className="text-purple-600">{children}</span>
         </button>
     )
 }
@@ -149,7 +149,7 @@ export default function ArtistPage() {
     return (
         <div className="h-full">
             {/* Artist Profile Header */}
-            <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 mb-6 shadow-sm">
+            <div className="bg-white dark:bg-[#1E1B26] rounded-2xl p-6 mb-6 shadow-sm">
                 <div className="flex flex-col md:flex-row gap-6">
                     {/* Avatar */}
                     <div className="flex-shrink-0">
@@ -174,7 +174,7 @@ export default function ArtistPage() {
                     <div className="flex-1">
                         <div className="flex items-start justify-between mb-4">
                             <div>
-                                <h1 className="text-3xl font-bold dark:text-white mb-1">{fullName}</h1>
+                                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{fullName}</h1>
                                 <p className="text-gray-600 dark:text-gray-400">@{artist.username}</p>
                             </div>
                         </div>
@@ -210,7 +210,7 @@ export default function ArtistPage() {
 
             {/* Artworks Section */}
             <div className="mb-4">
-                <h2 className="text-2xl font-bold dark:text-white">Artworks</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Artworks</h2>
             </div>
 
             <main className="py-3 sm:py-3 min-h-[calc(100vh-400px)]">

@@ -52,11 +52,11 @@ export default function BusinessDashboardPage() {
     totalArtworks: 24,
     totalViews: 15420,
     totalLikes: 892,
-    totalRevenue: 12500,
+    totalRevenue: 12500000,
     recentArtworks: [
-      { id: 1, title: "Sunset Dreams", digitalPrice: 25, physicalPrice: 850, hasPhysicalVersion: true, views: 324, likes: 45 },
-      { id: 2, title: "Urban Rhythm", digitalPrice: 35, physicalPrice: 1200, hasPhysicalVersion: true, views: 567, likes: 78 },
-      { id: 3, title: "Nature's Call", digitalPrice: 15, physicalPrice: 0, hasPhysicalVersion: false, views: 234, likes: 32 }
+      { id: 1, title: "Sunset Dreams", digitalPrice: 25000, physicalPrice: 850000, hasPhysicalVersion: true, views: 324, likes: 45 },
+      { id: 2, title: "Urban Rhythm", digitalPrice: 35000, physicalPrice: 1200000, hasPhysicalVersion: true, views: 567, likes: 78 },
+      { id: 3, title: "Nature's Call", digitalPrice: 15000, physicalPrice: 0, hasPhysicalVersion: false, views: 234, likes: 32 }
     ]
   };
 
@@ -64,7 +64,7 @@ export default function BusinessDashboardPage() {
     totalArtists: 12,
     totalArtworks: 156,
     activeEvents: 3,
-    totalRevenue: 45000,
+    totalRevenue: 45000000,
     recentEvents: [
       { id: 1, title: "Modern Art Exhibition", date: "2025-10-15", attendees: 125 },
       { id: 2, title: "Digital Artists Showcase", date: "2025-11-02", attendees: 89 },
@@ -116,7 +116,7 @@ export default function BusinessDashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {isArtist ? (
           <>
-            <Card>
+            <Card className="bg-white dark:bg-[#1E1B26]">
               <CardBody className="flex flex-row items-center gap-4 p-6">
                 <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
                   <Palette size={24} className="text-blue-600 dark:text-blue-400" />
@@ -130,7 +130,7 @@ export default function BusinessDashboardPage() {
               </CardBody>
             </Card>
 
-            <Card>
+            <Card className="bg-white dark:bg-[#1E1B26]">
               <CardBody className="flex flex-row items-center gap-4 p-6">
                 <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
                   <Eye size={24} className="text-green-600 dark:text-green-400" />
@@ -144,7 +144,7 @@ export default function BusinessDashboardPage() {
               </CardBody>
             </Card>
 
-            <Card>
+            <Card className="bg-white dark:bg-[#1E1B26]">
               <CardBody className="flex flex-row items-center gap-4 p-6">
                 <div className="p-3 bg-red-100 dark:bg-red-900 rounded-full">
                   <Heart size={24} className="text-red-600 dark:text-red-400" />
@@ -158,7 +158,7 @@ export default function BusinessDashboardPage() {
               </CardBody>
             </Card>
 
-            <Card>
+            <Card className="bg-white dark:bg-[#1E1B26]">
               <CardBody className="flex flex-row items-center gap-4 p-6">
                 <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-full">
                   <CurrencyDollar size={24} className="text-yellow-600 dark:text-yellow-400" />
@@ -166,7 +166,7 @@ export default function BusinessDashboardPage() {
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Revenue</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ${(isArtist ? artistStats.totalRevenue : orgStats.totalRevenue).toLocaleString()}
+                    {(isArtist ? artistStats.totalRevenue : orgStats.totalRevenue).toLocaleString('vi-VN')} VND
                   </p>
                 </div>
               </CardBody>
@@ -174,7 +174,7 @@ export default function BusinessDashboardPage() {
           </>
         ) : (
           <>
-            <Card>
+            <Card className="bg-white dark:bg-[#1E1B26]">
               <CardBody className="flex flex-row items-center gap-4 p-6">
                 <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
                   <Users size={24} className="text-blue-600 dark:text-blue-400" />
@@ -188,7 +188,7 @@ export default function BusinessDashboardPage() {
               </CardBody>
             </Card>
 
-            <Card>
+            <Card className="bg-white dark:bg-[#1E1B26]">
               <CardBody className="flex flex-row items-center gap-4 p-6">
                 <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-full">
                   <Palette size={24} className="text-purple-600 dark:text-purple-400" />
@@ -202,7 +202,7 @@ export default function BusinessDashboardPage() {
               </CardBody>
             </Card>
 
-            <Card>
+            <Card className="bg-white dark:bg-[#1E1B26]">
               <CardBody className="flex flex-row items-center gap-4 p-6">
                 <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
                   <Calendar size={24} className="text-green-600 dark:text-green-400" />
@@ -216,7 +216,7 @@ export default function BusinessDashboardPage() {
               </CardBody>
             </Card>
 
-            <Card>
+            <Card className="bg-white dark:bg-[#1E1B26]">
               <CardBody className="flex flex-row items-center gap-4 p-6">
                 <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-full">
                   <TrendUp size={24} className="text-yellow-600 dark:text-yellow-400" />
@@ -224,7 +224,7 @@ export default function BusinessDashboardPage() {
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Revenue</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ${(isArtist ? artistStats.totalRevenue : orgStats.totalRevenue).toLocaleString()}
+                    {(isArtist ? artistStats.totalRevenue : orgStats.totalRevenue).toLocaleString('vi-VN')} VND
                   </p>
                 </div>
               </CardBody>
@@ -235,9 +235,9 @@ export default function BusinessDashboardPage() {
 
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="bg-white dark:bg-[#1E1B26]">
           <CardHeader>
-            <h3 className="text-lg font-semibold">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               {isArtist ? 'Recent Artworks' : 'Upcoming Events'}
             </h3>
           </CardHeader>
@@ -254,12 +254,12 @@ export default function BusinessDashboardPage() {
                         <div className="flex items-center gap-3">
                           <span className="flex items-center gap-1">
                             <span className="text-blue-600 dark:text-blue-400">💻</span>
-                            ${artwork.digitalPrice}
+                            {artwork.digitalPrice.toLocaleString('vi-VN')} VND
                           </span>
                           {artwork.hasPhysicalVersion && (
                             <span className="flex items-center gap-1">
                               <span className="text-green-600 dark:text-green-400">📦</span>
-                              ${artwork.physicalPrice}
+                              {artwork.physicalPrice.toLocaleString('vi-VN')} VND
                             </span>
                           )}
                         </div>
@@ -288,9 +288,9 @@ export default function BusinessDashboardPage() {
           </CardBody>
         </Card>
 
-        <Card>
+        <Card className="bg-white dark:bg-[#1E1B26]">
           <CardHeader>
-            <h3 className="text-lg font-semibold">Quick Actions</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Quick Actions</h3>
           </CardHeader>
           <CardBody>
             <div className="grid grid-cols-1 gap-3">

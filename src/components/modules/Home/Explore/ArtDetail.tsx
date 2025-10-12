@@ -455,14 +455,14 @@ export default function ArtDetail({ id }: { id: string }) {
                         {art.price && (
                             <div className="flex flex-col gap-3 mb-5">
                                 <div className="gap-2 items-center rounded-xl flex px-3 py-2 text-[12px] bg-[#eeee] dark:bg-neutral-800 w-fit">
-                                    <span className="text-[14px] font-bold text-[#9C27B0]/80">Price</span>
-                                    <span className="text-[14px] font-bold text-[#9C27B0]/80">${art.price}</span>
+                                    <span className="text-[14px] font-bold text-[#9C27B0]/80">Physic Price</span>
+                                    <span className="text-[14px] font-bold text-[#9C27B0]/80">{Number(art.price).toLocaleString('vi-VN')} VND</span>
                                 </div>
                                 {currentUser && (
                                     <button
                                         onClick={() => addToCart.mutate({ artworkId: art.id, quantity: 1 })}
                                         disabled={addToCart.isPending}
-                                        className="rounded-xl px-4 py-2.5 text-sm font-semibold bg-[#9C27B0] text-white hover:bg-[#9C27B0]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className="rounded-xl w-fit px-4 py-2.5 text-sm font-semibold bg-[#9C27B0] text-white hover:bg-[#9C27B0]/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
                                         {addToCart.isPending ? 'Adding...' : 'Add to Cart'}
                                     </button>

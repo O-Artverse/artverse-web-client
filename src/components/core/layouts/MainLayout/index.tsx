@@ -93,7 +93,7 @@ export default MainLayout
 
 export const ChatPanel = () => {
   return (
-    <div className="absolute top-0 left-0 z-10 h-[calc(100%-12px)] w-full md:w-[468px] rounded-xl max-h-[calc(100vh-180px)] md:max-h-[calc(100vh-100px)] [box-shadow:0_1px_4px_rgba(0,0,0,0.2)] backdrop-blur-smoverflow-y-auto">
+    <div className="absolute top-0 left-0 z-10 h-[calc(100%-12px)] w-full md:w-[468px] rounded-xl max-h-[calc(100vh-180px)] md:max-h-[calc(100vh-100px)] [box-shadow:0_1px_4px_rgba(0,0,0,0.2)] backdrop-blur-sm overflow-y-auto">
       <ChatModule />
     </div>
   )

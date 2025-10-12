@@ -74,25 +74,28 @@ const Card = React.memo(function Card({
                                 <span className="text-primary"><DotsThreeIcon size={18} weight="bold" /></span>
                             </button>
                         </DropdownTrigger>
-                        <DropdownMenu aria-label="Artwork actions">
+                        <DropdownMenu aria-label="Artwork actions" className="bg-white dark:bg-[#1E1B26]">
                             <DropdownItem
                                 key="add-to-album"
-                                startContent={<BookmarkSimple size={16} weight="bold" />}
+                                startContent={<BookmarkSimple size={16} weight="bold" className="text-gray-700 dark:text-white" />}
                                 onPress={() => onAddToAlbum(artwork.id)}
+                                className="text-gray-700 dark:text-white"
                             >
                                 Add to Album
                             </DropdownItem>
                             <DropdownItem
                                 key="like"
-                                startContent={<Heart size={16} weight="bold" />}
+                                startContent={<Heart size={16} weight="bold" className="text-gray-700 dark:text-white" />}
                                 onPress={() => onToggleLike(artwork.id)}
+                                className="text-gray-700 dark:text-white"
                             >
                                 Like
                             </DropdownItem>
                             <DropdownItem
                                 key="save"
-                                startContent={<BookmarkSimple size={16} weight="bold" />}
+                                startContent={<BookmarkSimple size={16} weight="bold" className="text-gray-700 dark:text-white" />}
                                 onPress={() => onToggleSave(artwork.id)}
+                                className="text-gray-700 dark:text-white"
                             >
                                 Save
                             </DropdownItem>
@@ -221,7 +224,7 @@ export default function ExplorePage() {
                         className={`rounded-full px-3 py-1 text-sm transition ${
                             activeCategoryId === null
                                 ? "bg-purple-600 text-white"
-                                : "bg-gray-100 dark:bg-neutral-800"
+                                : "bg-gray-100 dark:bg-neutral-800 text-gray-800 dark:text-white"
                         }`}
                     >
                         All
@@ -233,7 +236,7 @@ export default function ExplorePage() {
                             className={`rounded-full px-3 py-1 text-sm transition ${
                                 activeCategoryId === category.id
                                     ? "bg-purple-600 text-white"
-                                    : "bg-gray-100 dark:bg-neutral-800"
+                                    : "bg-gray-100 dark:bg-neutral-800 text-gray-800 dark:text-white"
                             }`}
                         >
                             {category.name}
@@ -279,10 +282,10 @@ export default function ExplorePage() {
 
             {/* Album Selection Modal */}
             <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
-                <ModalContent>
+                <ModalContent className="bg-white dark:bg-[#1E1B26]">
                     {(onClose) => (
                         <>
-                            <ModalHeader>Add to Album</ModalHeader>
+                            <ModalHeader className="text-gray-900 dark:text-white">Add to Album</ModalHeader>
                             <ModalBody>
                                 {albums && albums.length > 0 ? (
                                     <div className="space-y-2">
@@ -309,7 +312,7 @@ export default function ExplorePage() {
                                                     </div>
                                                 )}
                                                 <div className="flex-1 text-left">
-                                                    <div className="font-medium dark:text-white">{album.name}</div>
+                                                    <div className="font-medium text-gray-900 dark:text-white">{album.name}</div>
                                                     <div className="text-sm text-gray-500 dark:text-gray-400">
                                                         {album._count?.artworks || 0} artworks
                                                     </div>

@@ -116,7 +116,7 @@ export default function RootLayout({
           {children}
         </AppProvider>
         <Toaster
-          position="top-right"
+          position="bottom-center"
           toastOptions={{
             duration: 3000,
             style: {

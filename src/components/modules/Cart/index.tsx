@@ -222,11 +222,11 @@ export default function CartPage() {
                       {/* Price */}
                       <div className="text-right">
                         <div className="text-lg sm:text-xl font-bold text-purple-600 dark:text-purple-400">
-                          ${(Number(item.price) * item.quantity).toFixed(2)}
+                          {(Number(item.price) * item.quantity).toLocaleString('vi-VN')} VND
                         </div>
                         {item.quantity > 1 && (
                           <div className="text-xs text-gray-500 dark:text-gray-400">
-                            ${Number(item.price).toFixed(2)} each
+                            {Number(item.price).toLocaleString('vi-VN')} VND each
                           </div>
                         )}
                       </div>
@@ -248,20 +248,20 @@ export default function CartPage() {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between text-gray-600 dark:text-gray-400">
                 <span>Subtotal ({cart.totalItems} items)</span>
-                <span>${Number(cart.subtotal).toFixed(2)}</span>
+                <span>{Number(cart.subtotal).toLocaleString('vi-VN')} VND</span>
               </div>
 
               {Number(cart.tax) > 0 && (
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Tax</span>
-                  <span>${Number(cart.tax).toFixed(2)}</span>
+                  <span>{Number(cart.tax).toLocaleString('vi-VN')} VND</span>
                 </div>
               )}
 
               {Number(cart.shippingFee) > 0 && (
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Shipping</span>
-                  <span>${Number(cart.shippingFee).toFixed(2)}</span>
+                  <span>{Number(cart.shippingFee).toLocaleString('vi-VN')} VND</span>
                 </div>
               )}
 
@@ -270,7 +270,7 @@ export default function CartPage() {
               <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-gray-100">
                 <span>Total</span>
                 <span className="text-purple-600 dark:text-purple-400">
-                  ${Number(cart.total).toFixed(2)}
+                  {Number(cart.total).toLocaleString('vi-VN')} VND
                 </span>
               </div>
             </div>

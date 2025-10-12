@@ -220,7 +220,7 @@ export default function CheckoutPage() {
                           Qty: {item.quantity}
                         </span>
                         <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
-                          ${(Number(item.price) * item.quantity).toFixed(2)}
+                          {(Number(item.price) * item.quantity).toLocaleString('vi-VN')} VND
                         </span>
                       </div>
                     </div>
@@ -240,20 +240,20 @@ export default function CheckoutPage() {
               <div className="space-y-3 text-sm mb-6">
                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
                   <span>Subtotal</span>
-                  <span>${Number(cart.subtotal).toFixed(2)}</span>
+                  <span>{Number(cart.subtotal).toLocaleString('vi-VN')} VND</span>
                 </div>
 
                 {Number(cart.tax) > 0 && (
                   <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Tax</span>
-                    <span>${Number(cart.tax).toFixed(2)}</span>
+                    <span>{Number(cart.tax).toLocaleString('vi-VN')} VND</span>
                   </div>
                 )}
 
                 {Number(cart.shippingFee) > 0 && (
                   <div className="flex justify-between text-gray-600 dark:text-gray-400">
                     <span>Shipping</span>
-                    <span>${Number(cart.shippingFee).toFixed(2)}</span>
+                    <span>{Number(cart.shippingFee).toLocaleString('vi-VN')} VND</span>
                   </div>
                 )}
 
@@ -262,7 +262,7 @@ export default function CheckoutPage() {
                 <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-gray-100">
                   <span>Total</span>
                   <span className="text-purple-600 dark:text-purple-400">
-                    ${Number(cart.total).toFixed(2)}
+                    {Number(cart.total).toLocaleString('vi-VN')} VND
                   </span>
                 </div>
               </div>
